@@ -1,0 +1,2754 @@
+{
+  "openapi": "3.0.2",
+  "info": {
+    "title": "TrueAccord API",
+    "version": "1.0",
+    "description": "The TrueAccord API is a RESTful API used to manage collections with the TrueAccord platform. \n\nAll requests must be performed using a HTTPS connection.\n\n# Authentication\nRequest to the TrueAccord API are authenticated using an API key with [HTTP Basic Access Authentication](https://en.wikipedia.org/wiki/Basic_access_authentication). Currently only active customers may provision an API key. Contact your account manager for more information about getting an API key. \n\nTo create API requests with your API key programmatically, include a header on the request with the following structure:\n```\nAuthorization: Basic <YOUR_API_KEY>\n```\n\n## Testing Your API Key\nOnce you have an API key, you can test it using the following command:\n```bash\n$ curl https://api.trueaccord.com/api/v1/customers/ -u $YOUR_API_KEY:\n``` \n**Note:** You must keep the colon (\":\") after your API key, as this represents a password which is being left blank.\n\nYou can also query the API in the browser with the same endpoint, https://api.trueaccord.com/api/v1/customers/.  You'll be asked to provide a username and password in a pop-up alert. Copy-paste your API key into the username field, leave the password blank, and click the \"Sign In\" button. You'll see the JSON response in the browser window.\n",
+    "x-logo": {
+      "url": "https://raw.githubusercontent.com/othc/openapi-spec/master/src/trueaccord-logo-blue-background.png?token=ASCXFQTBWSGCS3RAOHKNXN3AFUTIM"
+    }
+  },
+  "servers": [
+    {
+      "url": "https://api.trueaccord.com/api/v1"
+    }
+  ],
+  "tags": [
+    {
+      "name": "Customers",
+      "x-displayName": "Customers",
+      "description": "Create and manage customers."
+    },
+    {
+      "name": "Debts",
+      "x-displayName": "Debts",
+      "description": "View customer debt information."
+    },
+    {
+      "name": "Payments",
+      "x-displayName": "Payments",
+      "description": "View customer payment information. \n\nCore to the payments endpoints is the `payments` object. The payments object represents a change in a debt's balance.\n\n## Important Fields\n* `amount`: Amount in cents of payment. Postive amount remove from the balance. Negtive amounts increase the balance. \n  * For example, if CustomerA owed $60.00, a payment amount of 2500 would remove $25 from the balance, making the new balance $35.00.\n* `payee`: Identifies who received the payment. Can take one of the following values:\n    * `CREDITOR`: Payment made directly to creditor.\n    * `TRUEACCORD`: Payment made to TrueAccord (acting on behalf of the creditor). \n* `meta`: Object with meta information about the payment. Only present when payment object returned from TrueAccord (not to be included in requests). Object has keys: \n  * `timeCreated`: Time in miliseconds since Jan 1, 1970 UTC when payment posted to TrueAccord. \n  * `id`: Unique identifier for the payment. \n* `transactionReference`: Used to associate transaction with identifier in customer's internal system.\n* `transactionType`: Identifiers the type of payment and can take the following values:\n  * `PAYMENT`: Standard payment. Deducts the debt balance. Amount must be positive. \n  * `RETURNED_PAYMENT`: Payment that failed after it was declared successful. Typically used when ACH payments return or when creditor refunds customer. The payment increases the debt balance. Must be negative.\n  * `REFUND`: Payment refunded after it was made. Increases debt's balance. Must be negative. \n* `paymentTimestamp`: Optional. Can be used to provide the initial time of payment. Miliseconds since Jan 1, 1970 UTC. If not provided in request, returned same as `meta.timeCreated`.   \n\n## Example Payment Object\nHere's an example payment object: \n```json\n  {\n    \"meta\": {\n      \"id\": \"11111111111111111111111111111111\",\n      \"timeCreated\": 1385159142788\n    },\n    \"amount\": {\n      \"amount\": 300,\n      \"currency\": \"USD\"\n    },\n    \"payee\": \"TRUEACCORD\",\n    \"transactionReference\": \"MyTransactionRef\",\n    \"note\": \"Paid directly via CC\",\n    \"transactionType\": \"PAYMENT\",\n    \"paymentTimestamp\" : 1448818320123\n  }\n```\n"
+    },
+    {
+      "name": "Debt Representation",
+      "x-displayName": "Debt Representation",
+      "description": "Create and manage customer representation."
+    },
+    {
+      "name": "Creditors",
+      "x-displayName": "Creditors",
+      "description": "Manage creditor information."
+    }
+  ],
+  "paths": {
+    "/customers": {
+      "post": {
+        "summary": "Create customers (original method)",
+        "tags": [
+          "Customers"
+        ],
+        "description": "One or more customers can be added in a single request. The request body contains an array of Customers under the key `\"customers\"`.",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "customers": {
+                    "type": "array",
+                    "items": {
+                      "$ref": "#/components/schemas/CustomerRequest"
+                    }
+                  },
+                  "addDebtsIfPossible": {
+                    "type": "boolean",
+                    "description": "Optional boolean flag to add new debts to customers in the request if they have already been placed."
+                  },
+                  "customersWithAddedDebts": {
+                    "type": "array",
+                    "items": {
+                      "$ref": "#/components/schemas/CustomerRequest"
+                    },
+                    "description": "Existing customers who had a new debt added"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "The response will mirror your request but with an additional `meta` field that can be used in the future to reference the customer objects you have created.\n\n\nIf there are any duplicated customers in the query that have been placed before, their references will appear in the response under the `duplicatedReferences` field.\n\n\nIf `addDebtsIfPossible` is flagged, the response will mirror your request with new customers, and also include a separate field for existing customers that had new debts added, `customersWithAddedDebts`. ",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "meta": {
+                      "$ref": "#/components/schemas/Meta"
+                    },
+                    "customers": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/Customer"
+                      }
+                    },
+                    "addDebtsIfPossible": {
+                      "type": "boolean",
+                      "description": "Optional boolean flag to add new debts to customers in the request if they have already been placed."
+                    },
+                    "customersWithAddedDebts": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/Customer"
+                      },
+                      "description": "Existing customers who had a new debt added"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "summary": "Get customers",
+        "tags": [
+          "Customers"
+        ],
+        "description": "Returns a paginated list of Customer objects you created with the current status information on the customers.",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "offset",
+            "schema": {
+              "type": "integer"
+            },
+            "description": "Results returned offset from zero, with the 0th result being the first result."
+          },
+          {
+            "in": "query",
+            "name": "count",
+            "schema": {
+              "type": "integer",
+              "maximum": 100
+            },
+            "description": "Number of results returned."
+          },
+          {
+            "$ref": "#/components/parameters/StartTime"
+          },
+          {
+            "$ref": "#/components/parameters/EndTime"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Ok",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "totalResponses": {
+                      "type": "integer"
+                    },
+                    "customers": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/Customer"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/customers/?reference={internalReferenceId}": {
+      "get": {
+        "summary": "Get customers by internal reference",
+        "tags": [
+          "Customers"
+        ],
+        "description": "This will return a customer object or array of customer objects specified by your internal reference number.",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "internalReferenceId",
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "description": "List of internal reference IDs separated by commas. Must have at least 1 value and at most 100 values.",
+            "example": "abcde123,efghi456,jklmn789"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Returns a customer object or list of customer objects specified by your internal reference number."
+          }
+        }
+      }
+    },
+    "/customers/{customerId}": {
+      "parameters": [
+        {
+          "$ref": "#/components/parameters/CustomerId"
+        }
+      ],
+      "get": {
+        "summary": "Get customer by Customer ID",
+        "tags": [
+          "Customers"
+        ],
+        "description": "Returns a customer object with the given TrueAccord `CUSTOMER_ID`. (Note: the CUSTOMER_ID appears in the `meta` field of the Customer object that was returned when you added the customer. The CUSTOMER_ID also appears in the GET https://api.trueaccord.com/api/v1/customers/ response.)",
+        "responses": {
+          "200": {
+            "description": "Ok",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Customer"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "summary": "Edit customer information",
+        "tags": [
+          "Customers"
+        ],
+        "description": "Edit customer information. \n\nThis is a PUT endpoint and so any information in the payload will be treated as the source of truth. Prior to calling this endpoint, please do a GET request to pull down the most recent information. To disable an email/phone/address do not send it in the payload. ",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CustomerRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "204": {
+            "description": "Returns the updated customer information in the TrueAccord system.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Customer"
+                }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "summary": "Update customer contact info",
+        "tags": [
+          "Customers"
+        ],
+        "description": "Add contact information to customer",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "addresses": {
+                    "$ref": "#/components/schemas/Addresses"
+                  },
+                  "phones": {
+                    "$ref": "#/components/schemas/Phones"
+                  },
+                  "emails": {
+                    "$ref": "#/components/schemas/Emails"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "202": {
+            "description": "Returns the same data as the request.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "addresses": {
+                      "$ref": "#/components/schemas/Addresses"
+                    },
+                    "phones": {
+                      "$ref": "#/components/schemas/Phones"
+                    },
+                    "emails": {
+                      "$ref": "#/components/schemas/Emails"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/customersBatch": {
+      "post": {
+        "summary": "Create customers (recommended method)",
+        "tags": [
+          "Customers"
+        ],
+        "description": "Updated version of the `/customers` endpoint. `/customersBatch` (this endpoint) is recommended to use over `/customers`. The response mirrors the request and also includes the results or errors per account.",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "responses": {
+                    "type": "array",
+                    "items": {
+                      "$ref": "#/components/schemas/CustomerRequest"
+                    }
+                  },
+                  "addDebtsIfPossible": {
+                    "type": "boolean",
+                    "description": "Optional boolean flag to add new debts to customers in the request if they have already been placed."
+                  },
+                  "customersWithAddedDebts": {
+                    "type": "array",
+                    "items": {
+                      "$ref": "#/components/schemas/Customer"
+                    },
+                    "description": "Existing customers who had a new debt added"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "In the case where the request succeeds, the response will mirror your request but with an additional `meta` field that can be used in the future to reference the customer objects you have created. If `addDebtsIfPossible` is flagged, the response will mirror your request with new customers, and also include a flag for `isAddedDebt` if an existing customer had another debt placed.\n\nIf there are any duplicate references/transaction ids or any other issues with a placed customer, it will be visible in the response with the flag `isError`.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "responses": {
+                      "type": "array",
+                      "items": {
+                        "anyOf": [
+                          {
+                            "type": "object",
+                            "properties": {
+                              "isAddedDebt": {
+                                "type": "boolean",
+                                "example": true
+                              },
+                              "customer": {
+                                "$ref": "#/components/schemas/Customer"
+                              }
+                            }
+                          },
+                          {
+                            "$ref": "#/components/schemas/CustomersBatchError"
+                          }
+                        ]
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/customers/{customerId}/comments": {
+      "parameters": [
+        {
+          "$ref": "#/components/parameters/CustomerId"
+        }
+      ],
+      "post": {
+        "summary": "Add comments to customer",
+        "tags": [
+          "Customers"
+        ],
+        "description": "Add any notes that the creditor wants t oadd to the `comments` field for a specifc customer. \n\nPlease make sure that comments are only 500 characters long. We will only ingest a certain amount of comments at any given point. \n",
+        "requestBody": {
+          "description": "Include an array of the comments to add to the account.",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Comments"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful posting"
+          }
+        }
+      }
+    },
+    "/customers/{customerId}/unsubscribe": {
+      "parameters": [
+        {
+          "$ref": "#/components/parameters/CustomerId"
+        }
+      ],
+      "post": {
+        "summary": "Remove customer contact information",
+        "tags": [
+          "Customers"
+        ],
+        "description": "This removes any contact information already in the TrueAccord system. If the contact informaiton isn't in the TrueAccord system, you need to upload it and then call this endpoint. \n",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ContactInformation"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/customers/{customerId}/debts/": {
+      "get": {
+        "summary": "Get debts by customer",
+        "tags": [
+          "Debts"
+        ],
+        "description": "List debts of customer.",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/CustomerId"
+          },
+          {
+            "$ref": "#/components/parameters/StartTime"
+          },
+          {
+            "$ref": "#/components/parameters/EndTime"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Lists all customer debts corresponding to the request.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "debts": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/Debt"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "summary": "Add one debt to customer",
+        "tags": [
+          "Customers"
+        ],
+        "description": "Add new debt to customer",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Debt"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "The response will be a debt object with a `meta.id` field which will be the debt permanent unique id. It is recommended to set the transactionId field to an invoice number on your system.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Debt"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/customers/{customerId}/debts/{debtId}/retract": {
+      "post": {
+        "summary": "Retract debt from customer",
+        "tags": [
+          "Debts"
+        ],
+        "description": "Retract debt from a customer. \n\n**Note: Retractions may result in fees. Please refer to the TOS and your contract or email support@trueaccord.com for more details.**",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "keepIfOnPaymentPlan",
+            "schema": {
+              "type": "boolean"
+            },
+            "example": true,
+            "description": "Default is `true`. Setting this to true will prevent the debt from being retracted if it is on a payment plan."
+          },
+          {
+            "in": "query",
+            "name": "keepIfHasDispute",
+            "schema": {
+              "type": "boolean"
+            },
+            "example": true,
+            "description": "Default is `true`. Setting this to true will prevent the debt from being retracted if it has a dispute."
+          },
+          {
+            "in": "query",
+            "name": "skipTerminalValidation",
+            "schema": {
+              "type": "boolean"
+            },
+            "example": false,
+            "description": "Default is `false`. Setting this to true will allow for retraction of terminal debts."
+          },
+          {
+            "in": "query",
+            "name": "reason",
+            "schema": {
+              "type": "string"
+            },
+            "example": "BANKRUPTCY",
+            "description": "Optional field to add a retraction reason for the debt."
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Responds with debt object.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Debt"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/customers/{customerId}/debts/{debtId}/reopen": {
+      "parameters": [
+        {
+          "$ref": "#/components/parameters/CustomerId"
+        },
+        {
+          "$ref": "#/components/parameters/DebtId"
+        }
+      ],
+      "post": {
+        "summary": "Reopen closed debt by customer",
+        "tags": [
+          "Debts"
+        ],
+        "description": "Reopen a closed debt \n\nUse this method if you wish to commence collections on an account that was closed in the past. For example, a settled account that accrued additional debt, or a retracted account that's being sent again to collections.",
+        "requestBody": {
+          "description": "The request body is the desired balance of the debt.",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Debt"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful update of debt object.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Debt"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/customers/{customerId}/debts/{debtId}/totalToCollectBalance": {
+      "parameters": [
+        {
+          "$ref": "#/components/parameters/CustomerId"
+        },
+        {
+          "$ref": "#/components/parameters/DebtId"
+        }
+      ],
+      "get": {
+        "summary": "Get debt total to collect balance",
+        "tags": [
+          "Debts"
+        ],
+        "description": "Read a debt's total to collect balance",
+        "responses": {
+          "200": {
+            "description": "Returns the requested debt object.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Debt"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "summary": "Update a debt's total to collect balance",
+        "tags": [
+          "Debts"
+        ],
+        "description": "Update a debt's total to collect balance",
+        "requestBody": {
+          "description": "Debt object referring to total amount for TrueAccord to collect on before any payments or credits.",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Debt"
+              }
+            }
+          }
+        },
+        "responses": {
+          "204": {
+            "description": "Returns the updated debt object.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Debt"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/customers/{customerId}/debts/{debtId}/clientFields": {
+      "parameters": [
+        {
+          "$ref": "#/components/parameters/CustomerId"
+        },
+        {
+          "$ref": "#/components/parameters/DebtId"
+        }
+      ],
+      "put": {
+        "summary": "Update client information on a debt",
+        "tags": [
+          "Debts"
+        ],
+        "description": "Update client fields on debt object. \n\n**Warning: Overrides existing fields.**",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ClientFields"
+              }
+            }
+          }
+        },
+        "responses": {
+          "204": {
+            "description": "Returns same client fields as the request.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClientFields"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/customers/{customerId}/debts/{debtId}/outOfStatuteInformation": {
+      "parameters": [
+        {
+          "$ref": "#/components/parameters/CustomerId"
+        },
+        {
+          "$ref": "#/components/parameters/DebtId"
+        }
+      ],
+      "put": {
+        "summary": "Update out of statute information on a debt",
+        "tags": [
+          "Debts"
+        ],
+        "description": "Update out of statute information",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "explicitOutOfStatuteDate": {
+                    "$ref": "#/components/schemas/OutOfStatuteInformation"
+                  },
+                  "explicitOutOfStatuteFlag": {
+                    "type": "boolean",
+                    "example": true,
+                    "description": "Boolean flag that can be used with or without the date for when out of statute date isn't available. Only shoudl be used set to `true` when there is no `explicitOutOfStatuteDate`."
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "204": {
+            "description": "Returns body of the request on successful PUT.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "explicitOutOfStatuteDate": {
+                      "$ref": "#/components/schemas/OutOfStatuteInformation"
+                    },
+                    "explicitOutOfStatuteFlag": {
+                      "type": "boolean",
+                      "example": true,
+                      "description": "Boolean flag that can be used with or without the date for when out of statute date isn't available. Only shoudl be used set to `true` when there is no `explicitOutOfStatuteDate`."
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/customers/{customerId}/debts/{debtId}/postChargeOffInformation": {
+      "parameters": [
+        {
+          "$ref": "#/components/parameters/CustomerId"
+        },
+        {
+          "$ref": "#/components/parameters/DebtId"
+        }
+      ],
+      "put": {
+        "summary": "Update post charge off information",
+        "tags": [
+          "Debts"
+        ],
+        "description": "Change post charge off information on a customer's debt.",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PostChargeOffInformation"
+              }
+            }
+          }
+        },
+        "responses": {
+          "204": {
+            "description": "Returns the request body.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PostChargeOffInformation"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/customers/{customerId}/debts/{debtId}/defaultDate": {
+      "parameters": [
+        {
+          "$ref": "#/components/parameters/CustomerId"
+        },
+        {
+          "$ref": "#/components/parameters/DebtId"
+        }
+      ],
+      "put": {
+        "summary": "Update default date on debt",
+        "tags": [
+          "Debts"
+        ],
+        "description": "Change default date",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Date"
+              }
+            }
+          }
+        },
+        "responses": {
+          "204": {
+            "description": "Successful update of default date returns the request body.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Date"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/customers/{customerId}/debts/{debtId}/pauseCollections": {
+      "parameters": [
+        {
+          "$ref": "#/components/parameters/CustomerId"
+        },
+        {
+          "$ref": "#/components/parameters/DebtId"
+        }
+      ],
+      "post": {
+        "summary": "Pause collections on a debt",
+        "tags": [
+          "Debts"
+        ],
+        "description": "Pause collections on a debt",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "changeDebtStatus",
+            "schema": {
+              "type": "boolean"
+            },
+            "description": "Changes debt's status to `Paused` if the parameter value is set to `true`."
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PauseCollections"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/customers/{customerId}/debts/{debtId}/unpauseCollections": {
+      "parameters": [
+        {
+          "$ref": "#/components/parameters/CustomerId"
+        },
+        {
+          "$ref": "#/components/parameters/DebtId"
+        }
+      ],
+      "post": {
+        "summary": "Unpause collections on a debt",
+        "tags": [
+          "Debts"
+        ],
+        "description": "Unpause collections on a debt",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "changeDebtStatus",
+            "schema": {
+              "type": "boolean"
+            },
+            "description": "When parameter value set to `true`, changes debt's status to last valid status or `New` if no old status exists."
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UnpauseCollections"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/customers/{customerId}/debts/{debtId}/payments/": {
+      "parameters": [
+        {
+          "$ref": "#/components/parameters/CustomerId"
+        },
+        {
+          "$ref": "#/components/parameters/DebtId"
+        }
+      ],
+      "get": {
+        "summary": "List payments to a debt",
+        "tags": [
+          "Payments"
+        ],
+        "description": "Returns a list of all payment events that have been made to the debt.",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/StartTime"
+          },
+          {
+            "$ref": "#/components/parameters/EndTime"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Object containing array of payments to the debt.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "payments": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/Payment"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "summary": "Report a payment",
+        "tags": [
+          "Payments"
+        ],
+        "description": "Update TrueAccord system with infomration about customer payment. \n\n**NOTE:** For balance adjustments, use the following route instead of this one: `/customers/{customerId}/debts/{debtId}/totalToCollectBalance`\n",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PaymentRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Same as request object with a `meta` field and `paymentTimestamp` if `paymentTimestamp` wasn't included in request.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Payment"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/debts/{debtId}/paymentPlans/": {
+      "parameters": [
+        {
+          "$ref": "#/components/parameters/DebtId"
+        }
+      ],
+      "get": {
+        "summary": "Get payment plans for a debt",
+        "description": "Lists all payment payment plans for a debt.",
+        "tags": [
+          "Payments"
+        ],
+        "parameters": [
+          {
+            "in": "query",
+            "name": "from",
+            "schema": {
+              "$ref": "#/components/schemas/TimeStamp"
+            },
+            "description": "Display only results created after the `from` value."
+          },
+          {
+            "in": "query",
+            "name": "to",
+            "schema": {
+              "$ref": "#/components/schemas/TimeStamp"
+            },
+            "description": "Display only results created until the `to` value."
+          },
+          {
+            "in": "query",
+            "name": "withInactivated",
+            "example": false,
+            "schema": {
+              "type": "boolean"
+            },
+            "description": "Flag to include inactivated payment plans in response. Defaults to include them. Cancel by settign value to `false`."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Returns an array of all active payment plans.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/PaymentPlan"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/debts/{debtId}/representation/attorneyRepresentation": {
+      "parameters": [
+        {
+          "$ref": "#/components/parameters/DebtId"
+        }
+      ],
+      "get": {
+        "tags": [
+          "Debt Representation"
+        ],
+        "summary": "Get attorney representation",
+        "description": "Get currently active attorney representation for a debt if it exists.",
+        "responses": {
+          "200": {
+            "description": "attorney representation for debt.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AttorneyRepresentation"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "summary": "Add attorney representation",
+        "tags": [
+          "Debt Representation"
+        ],
+        "description": "Add attorney representation to an existing debt object.",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AttorneyRepresentation"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful posting"
+          }
+        }
+      }
+    },
+    "/debts/{debtId}/representation/debtConsolidatorRepresentation": {
+      "parameters": [
+        {
+          "$ref": "#/components/parameters/DebtId"
+        }
+      ],
+      "post": {
+        "summary": "Add debt consolidator representation",
+        "tags": [
+          "Debt Representation"
+        ],
+        "description": "Add debt consolidator representation for a debt. The `debtConsolidatorType` must be selected from a predetermined list on our backend. Use `OTHER` or get in contact with TrueAccord to add a new one. The current list of debt consolidators is: \n* CREDIT_SOLUTIONS\n* FREEDOM_FINANCIAL\n* AMERICAN_FREEDOM_FINANCIAL\n* DEBT_SETTLEMENT_USA\n* US_DEBT_RELIEF\n* ACCELERATE_DEBT_MANAGEMENT_GROUP\n* PACIFIC_DEBT\n* NATIONAL_DEBT_RELIEF\n* CHRISTIAN_DEBT_REMOVERS\n* LIBERTY_SETTLEMENT_GROUP\n* CORPORATE_TURNAROUND\n* LAW_OFFICES_OF_MATTHEW_GUTHRIE\n* SEIDELMAN_PALMER\n* JASON_HASS_GROUP\n* ROLL_LAW_OFFICE\n* OTHER. \n",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DebtConsolidatorRepresentation"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful posting"
+          }
+        }
+      }
+    },
+    "/debts/{debtId}/representation/attorneyDebtConsolidatorRepresentation": {
+      "parameters": [
+        {
+          "$ref": "#/components/parameters/DebtId"
+        }
+      ],
+      "post": {
+        "tags": [
+          "Debt Representation"
+        ],
+        "summary": "Add attorney debt consolidator representation",
+        "description": "Based on creditor settings, the data sent in the post request will either be treated as an attorney or debt consolidator.\n",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AttorneyDebtConsolidatorRepresentation"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful posting"
+          }
+        }
+      }
+    },
+    "/debts/{debtId}/representation/cancelAttorneyRepresentation": {
+      "parameters": [
+        {
+          "$ref": "#/components/parameters/DebtId"
+        }
+      ],
+      "post": {
+        "tags": [
+          "Debt Representation"
+        ],
+        "summary": "Cancel attorney representation",
+        "description": "Cancel the attorney representation on a debt.",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CancelDebtRepresentation"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful posting"
+          }
+        }
+      }
+    },
+    "/debts/{debtId}/representation/cancelDebtConsolidatorRepresentation": {
+      "parameters": [
+        {
+          "$ref": "#/components/parameters/DebtId"
+        }
+      ],
+      "post": {
+        "tags": [
+          "Debt Representation"
+        ],
+        "summary": "Cancel debt consolidator representation",
+        "description": "Cancel the debt consolidator representation on a debt.",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CancelDebtRepresentation"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful posting"
+          }
+        }
+      }
+    },
+    "/creditors/{creditorId}/brands/": {
+      "parameters": [
+        {
+          "$ref": "#/components/parameters/CreditorId"
+        }
+      ],
+      "get": {
+        "tags": [
+          "Creditors"
+        ],
+        "summary": "List creditor brands",
+        "description": "List all creditor brands associated with a given TrueAccord Creditor ID",
+        "responses": {
+          "200": {
+            "description": "Returns a list of creditor brands.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/CreditorBrand"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Creditors"
+        ],
+        "summary": "Update creditor brands",
+        "description": "Bulk update all creditor brands. If you just want ot update a single brand, only update the relevant brand in the array and include the rest unchanged.\n\nNote that the `meta` field cannot be updated EXCEPT for the `meta.isPrimary` field.\\n\\n\n\nNew brands may also be added via this endpoint. However, the `meta` field cannot be posted EXCEPT for the `isActive` and `isPrimary` fields. The response will include the brand `meta.id` and `meta.versionInfo`.\n\nBrands must have unique names, and unique Merchant/Original Creditor field pairs when applicable.\n",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "brands": {
+                    "type": "array",
+                    "items": {
+                      "$ref": "#/components/schemas/CreditorBrand"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "204": {
+            "description": "Returns an array of existing brands.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/CreditorBrand"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Creditors"
+        ],
+        "summary": "Add new creditor brand",
+        "description": "Add a single brand object to the list of creditor brands. \n\nReturns a list of all brands including the newly added brand or an error message descriing the brand-level error. \n",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreditorBrand"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful post. Returns a list of all creditor brands.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/CreditorBrand"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/creditors/{creditorId}/info": {
+      "parameters": [
+        {
+          "$ref": "#/components/parameters/CreditorId"
+        }
+      ],
+      "get": {
+        "tags": [
+          "Creditors"
+        ],
+        "summary": "Get creditor info",
+        "description": "Returns information about a specific creditor based on the Creditor ID provided in the endpoint's path.",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreditorInfo"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "Customer": {
+        "type": "object",
+        "description": "For best results, you should specify as many fields as possible in the Customers object. Besides the above mandatory fields, all other fields are optional. If you have no value to supply for a field, you can omit it in your request.",
+        "required": [
+          "name",
+          "address",
+          "email"
+        ],
+        "properties": {
+          "meta": {
+            "$ref": "#/components/schemas/Meta",
+            "description": "**NOTE:** Metadata only present on customer objects created by responses."
+          },
+          "name": {
+            "type": "object",
+            "required": [
+              "firstName",
+              "lastName"
+            ],
+            "properties": {
+              "firstName": {
+                "type": "string"
+              },
+              "middleName": {
+                "type": "string"
+              },
+              "lastName": {
+                "type": "string"
+              }
+            }
+          },
+          "dateOfBirth": {
+            "$ref": "#/components/schemas/Date"
+          },
+          "businesses": {
+            "type": "array",
+            "description": "Use the `businesses` array to provide one or more businesses names associated with this customer.",
+            "items": {
+              "type": "object",
+              "properties": {
+                "name": {
+                  "type": "string"
+                },
+                "url": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "addresses": {
+            "$ref": "#/components/schemas/Addresses"
+          },
+          "phones": {
+            "$ref": "#/components/schemas/Phones"
+          },
+          "emails": {
+            "$ref": "#/components/schemas/Emails"
+          },
+          "comments": {
+            "type": "array",
+            "description": "The `comments` array can be used to provide us with context you may have about this customer.",
+            "items": {
+              "type": "object",
+              "required": [
+                "comment"
+              ],
+              "properties": {
+                "comment": {
+                  "type": "string",
+                  "example": "Transaction failed due to insufficient funds."
+                }
+              }
+            }
+          },
+          "reference": {
+            "type": "string",
+            "description": "The reference is a string used to attach your (client's) system's customer unique ID to this object. ",
+            "example": "MyRef"
+          },
+          "debts": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Debt"
+            }
+          },
+          "ssn": {
+            "type": "string",
+            "example": "123456789"
+          }
+        }
+      },
+      "CustomerRequest": {
+        "type": "object",
+        "description": "For best results, you should specify as many fields as possible in the Customers object. Besides the above mandatory fields, all other fields are optional. If you have no value to supply for a field, you can omit it in your request.",
+        "required": [
+          "name",
+          "address",
+          "email"
+        ],
+        "properties": {
+          "name": {
+            "type": "object",
+            "required": [
+              "firstName",
+              "lastName"
+            ],
+            "properties": {
+              "firstName": {
+                "type": "string"
+              },
+              "middleName": {
+                "type": "string"
+              },
+              "lastName": {
+                "type": "string"
+              }
+            }
+          },
+          "dateOfBirth": {
+            "$ref": "#/components/schemas/Date"
+          },
+          "businesses": {
+            "type": "array",
+            "description": "Use the `businesses` array to provide one or more businesses names associated with this customer.",
+            "items": {
+              "type": "object",
+              "properties": {
+                "name": {
+                  "type": "string"
+                },
+                "url": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "addresses": {
+            "$ref": "#/components/schemas/Addresses"
+          },
+          "phones": {
+            "$ref": "#/components/schemas/Phones"
+          },
+          "emails": {
+            "$ref": "#/components/schemas/Emails"
+          },
+          "comments": {
+            "type": "array",
+            "description": "The `comments` array can be used to provide us with context you may have about this customer.",
+            "items": {
+              "type": "object",
+              "required": [
+                "comment"
+              ],
+              "properties": {
+                "comment": {
+                  "type": "string",
+                  "example": "Transaction failed due to insufficient funds."
+                }
+              }
+            }
+          },
+          "reference": {
+            "type": "string",
+            "description": "The reference is a string used to attach your (client's) system's customer unique ID to this object. ",
+            "example": "MyRef"
+          },
+          "debts": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Debt"
+            }
+          },
+          "ssn": {
+            "type": "string",
+            "example": "123456789"
+          }
+        }
+      },
+      "Debt": {
+        "type": "object",
+        "properties": {
+          "biller": {
+            "type": "string",
+            "description": "For aggregators and marketplaces: this field stores the name of your sub merchant."
+          },
+          "product": {
+            "type": "string",
+            "description": "description of the product or service associated with this debt."
+          },
+          "initialPrincipal": {
+            "$ref": "#/components/schemas/MonetaryAmount",
+            "description": "The amount of money owed to you, in cents. For example, specifying `14567` would imply a debt of `$145.67`. Currently, the only supported currency is USD. Our system will attempt to collect the total of `initialPrincipal`, `initialInterest` and `initialFees`."
+          },
+          "initialInterest": {
+            "$ref": "#/components/schemas/MonetaryAmount",
+            "description": "The amount of interest owed to you by this customer by the time it's handed off to TrueAccord."
+          },
+          "initialFees": {
+            "$ref": "#/components/schemas/MonetaryAmount",
+            "description": "The amount of fees owed to you by this customer due to not paying initialPrincipal."
+          },
+          "postChargeOffInformation": {
+            "$ref": "#/components/schemas/PostChargeOffInformation"
+          },
+          "transactionId": {
+            "type": "string",
+            "maxLength": 1024,
+            "description": "arbitrary string that you can use to store a reference to the transaction on your system."
+          },
+          "transactionIp": {
+            "type": "string",
+            "description": "IP address associated with this transaction. Either in IPv4 or IPv6 format."
+          },
+          "transactionTimestamp": {
+            "type": "integer",
+            "format": "int64",
+            "description": "time that the transaction leading to the debt occurred, if applicable. Format: milliseconds since Jan 1st, 1970 UTC. For example, the origination date of the loan or the date the customer purchased the product which led to the debt. This should be **before** the `defaultTimestamp`. Note that this date may be shown to the customer to provide context on the debt, and also has ramifications in our system's compliance rules."
+          },
+          "defaultTimestamp": {
+            "$ref": "#/components/schemas/TimeStamp",
+            "description": "Time the customer defaulted on the debt, in milliseconds since Jan 1st, 1970 UTC. This should be **after** the `transactionTimestamp`. Note that this date may be shown to the customer to provide context on the debt, and also has ramifications in our system's compliance rules."
+          },
+          "accountOpenTimestamp": {
+            "$ref": "#/components/schemas/TimeStamp",
+            "description": "time the customer initially opened or created an account with you, if applicable. In milliseconds since Jan 1st, 1970 UTC. Note that this date may be shown to the customer to provide context on the debt, and also has ramifications in our system's compliance rules."
+          },
+          "clientFields": {
+            "type": "object",
+            "description": "Client-specific key-value pairs."
+          },
+          "sendCbrNegativeNotice": {
+            "type": "boolean",
+            "description": "Boolean flag indicating whether a negative notice **WILL BE** submitted to a credit bureau in the future."
+          },
+          "hasSentCbrNegativeNotice": {
+            "type": "boolean",
+            "description": "Boolean flag indicating whether a negative notice **HAS BEEN** submitted to a credit bureau in the past."
+          }
+        }
+      },
+      "Meta": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "3ef84ff19ddc"
+          },
+          "isActive": {
+            "type": "boolean",
+            "description": "Indicates whether an object is active in the system. If a customer or a debt are inactive, our system will not attempt to collect them.",
+            "example": true
+          },
+          "isPrimary": {
+            "type": "boolean",
+            "description": "If the object appears in a list of objects (like emails, or phones) this indicates whether that object has priority over others. There can be at most one primary object in a list.",
+            "example": false
+          },
+          "timeCreated": {
+            "$ref": "#/components/schemas/TimeStamp",
+            "example": 1385695523047
+          },
+          "lastModified": {
+            "$ref": "#/components/schemas/TimeStamp",
+            "example": 1385698000000
+          }
+        }
+      },
+      "BalanceSnapshot": {
+        "type": "object",
+        "description": "The balance snapshot object represents an update to the debt's balance. This is the total to collect balance which means that it is the total amount for True Accord to collect on before any payments or credits. **All `amount` fields is cents.**",
+        "properties": {
+          "principal": {
+            "$ref": "#/components/schemas/MonetaryAmount",
+            "description": "New absolute value for the principal."
+          },
+          "interest": {
+            "$ref": "#/components/schemas/MonetaryAmount",
+            "description": "New absolute value for the interest."
+          },
+          "fees": {
+            "$ref": "#/components/schemas/MonetaryAmount",
+            "description": "New absolute value for the fees."
+          },
+          "costs": {
+            "$ref": "#/components/schemas/MonetaryAmount",
+            "description": "The new absolute value for the costs."
+          },
+          "notes": {
+            "type": "string",
+            "description": "Note about why this balance has been updated."
+          }
+        }
+      },
+      "TimeStamp": {
+        "type": "integer",
+        "description": "Milliseconds since Jan 1st, 1970 UTC."
+      },
+      "MonetaryAmount": {
+        "type": "object",
+        "properties": {
+          "amount": {
+            "type": "integer",
+            "example": 30000
+          },
+          "currency": {
+            "type": "string",
+            "example": "USD"
+          }
+        }
+      },
+      "PostChargeOffInformation": {
+        "type": "object",
+        "description": "information relevant for post charge-off debts. Required for accounts in the state of NY.",
+        "properties": {
+          "balanceAtChargeOff": {
+            "$ref": "#/components/schemas/MonetaryAmount",
+            "description": "Balance at time of chage-off."
+          },
+          "chargeOffTimestamp": {
+            "$ref": "#/components/schemas/TimeStamp",
+            "description": "Time of charge-off."
+          },
+          "feesAccruedSinceChargeOff": {
+            "$ref": "#/components/schemas/MonetaryAmount",
+            "description": "Fees accrued since time of charge-off."
+          },
+          "interestAccruedSinceChargeOff": {
+            "$ref": "#/components/schemas/MonetaryAmount",
+            "description": "Interest accrued since time of charge-off."
+          },
+          "totalPaidSinceChargeOff": {
+            "$ref": "#/components/schemas/MonetaryAmount",
+            "description": "Total amount paid since time of charge-off."
+          }
+        }
+      },
+      "CustomersBatchError": {
+        "type": "object",
+        "description": "Response error for the customersBatch endpoint.",
+        "properties": {
+          "isError": {
+            "type": "boolean",
+            "example": true
+          },
+          "error": {
+            "type": "object",
+            "properties": {
+              "errorCode": {
+                "type": "string",
+                "example": "104"
+              },
+              "message": {
+                "type": "string",
+                "example": "Duplicated transactionId."
+              },
+              "reference": {
+                "type": "string",
+                "example": "1234"
+              },
+              "transactionId": {
+                "type": "string",
+                "example": "MyTransId"
+              }
+            }
+          }
+        }
+      },
+      "ClientFields": {
+        "type": "object",
+        "properties": {
+          "clientFields": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "key": {
+                  "type": "string",
+                  "description": "Key to be added to the debt client fields.",
+                  "example": "exampleKey"
+                },
+                "value": {
+                  "type": "string",
+                  "description": "Value to be added to the debt client fields corresponding to the key.",
+                  "example": "exampleValue"
+                }
+              }
+            }
+          }
+        }
+      },
+      "Date": {
+        "type": "object",
+        "properties": {
+          "day": {
+            "type": "integer",
+            "example": 6,
+            "description": "Day of the calendar year."
+          },
+          "month": {
+            "type": "integer",
+            "example": 4,
+            "description": "Month of calendar year."
+          },
+          "year": {
+            "type": "integer",
+            "example": 2012,
+            "description": "Calendar year."
+          }
+        }
+      },
+      "OutOfStatuteInformation": {
+        "description": "Date that debt went out of statute.",
+        "type": "object",
+        "properties": {
+          "day": {
+            "type": "integer",
+            "example": 6,
+            "description": "Day of the calendar year."
+          },
+          "month": {
+            "type": "integer",
+            "example": 4,
+            "description": "Month of calendar year."
+          },
+          "year": {
+            "type": "integer",
+            "example": 2012,
+            "description": "Calendar year."
+          }
+        }
+      },
+      "PauseCollections": {
+        "type": "object",
+        "properties": {
+          "reason": {
+            "type": "string",
+            "enum": [
+              "SCRA",
+              "PENDING_BK_VERIFICATION",
+              "PENDING_FRAUD_INVESTIGATION",
+              "PERMANENT_HARDSHIP_TERMINAL_ILLNESS",
+              "PERMANENT_HARDSHIP_PERMANENT_DISABILITY",
+              "PERMANENT_HARDSHIP_LONG_TERM_INCARCERATION",
+              "TEMPORARY_HARDSHIP",
+              "OTHER",
+              "GEOGRAPHIC_SUPPRESSION",
+              "GOOD_FAITH_PAYMENT",
+              "INVALID_DISPUTE_PAUSE_PERIOD",
+              "PROFANITY",
+              "MAILED_IN_PAYMENT",
+              "TEMPORARY_HARDSHIP_CONFIRMED",
+              "DV_DOCS_MAILED",
+              "PENDING_PREV_PAID_DOCS"
+            ],
+            "example": "OTHER",
+            "description": "Some of these pause reasons have restrictions on number of days they can be paused for, so when a custom range of days is necessary, use `OTHER` or `TEMPORARY_HARDSHIP`."
+          },
+          "pauseLengthInDays": {
+            "type": "integer",
+            "description": "The number of days the account should remain paused. NOTE: 0 indicates an indefinite pause period.",
+            "example": 14
+          },
+          "notes": {
+            "type": "string",
+            "description": "Notes related to pausing collections. Added as a comment on the debt.",
+            "example": "Client needs a pause during recall process."
+          }
+        }
+      },
+      "UnpauseCollections": {
+        "type": "object",
+        "properties": {
+          "notes": {
+            "type": "string",
+            "example": "Recall process is finished, unpausing.",
+            "description": "Notes related to unpausing collections. Added as comment on the debt."
+          }
+        }
+      },
+      "Addresses": {
+        "type": "array",
+        "minItems": 1,
+        "items": {
+          "type": "object",
+          "required": [
+            "city",
+            "state",
+            "zipcode",
+            "countryCode"
+          ],
+          "properties": {
+            "streetLine1": {
+              "type": "string",
+              "example": "101 N First St"
+            },
+            "streetLine2": {
+              "type": "string",
+              "example": "Apt 2"
+            },
+            "city": {
+              "type": "string",
+              "example": "San Jose"
+            },
+            "state": {
+              "type": "string",
+              "example": "CA"
+            },
+            "zipcode": {
+              "type": "string",
+              "example": "55555"
+            },
+            "countryCode": {
+              "type": "string",
+              "example": "US"
+            },
+            "types": {
+              "type": "array",
+              "uniqueItems": true,
+              "items": {
+                "type": "string"
+              }
+            }
+          }
+        }
+      },
+      "Phones": {
+        "type": "array",
+        "minItems": 1,
+        "items": {
+          "type": "object",
+          "required": [
+            "phoneNumber"
+          ],
+          "properties": {
+            "phoneNumber": {
+              "type": "string"
+            },
+            "types": {
+              "type": "array",
+              "uniqueItems": true,
+              "enum": [
+                "HOME",
+                "WORK",
+                "CELL",
+                "FAX",
+                "BUSINESS"
+              ],
+              "description": "Can contain the following strings: 'HOME', 'WORK', 'CELL', 'FAX', or 'BUSINESS'. The types argument can be left blank if context doesn't exist.",
+              "items": {
+                "type": "string"
+              }
+            }
+          }
+        }
+      },
+      "Emails": {
+        "type": "array",
+        "minItems": 1,
+        "items": {
+          "type": "object",
+          "required": [
+            "email"
+          ],
+          "properties": {
+            "email": {
+              "type": "string",
+              "example": "example@trueaccord.com"
+            },
+            "types": {
+              "type": "array",
+              "uniqueItems": true,
+              "enum": [
+                "HOME",
+                "WORK"
+              ],
+              "description": "Can contain the following strings: 'HOME' or 'WORK'",
+              "items": {
+                "type": "string"
+              }
+            }
+          }
+        }
+      },
+      "Comments": {
+        "type": "object",
+        "properties": {
+          "comments": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "example": "Customer only speaks spanish. Usually they have a translator with them."
+            }
+          }
+        }
+      },
+      "ContactInformation": {
+        "type": "object",
+        "properties": {
+          "addresses": {
+            "$ref": "#/components/schemas/Addresses"
+          },
+          "phones": {
+            "$ref": "#/components/schemas/Phones"
+          },
+          "emails": {
+            "$ref": "#/components/schemas/Emails"
+          }
+        }
+      },
+      "Payment": {
+        "type": "object",
+        "properties": {
+          "meta": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "example": "11111111111111111111111111111111"
+              },
+              "timeCreated": {
+                "$ref": "#/components/schemas/TimeStamp"
+              }
+            }
+          },
+          "amount": {
+            "$ref": "#/components/schemas/MonetaryAmount"
+          },
+          "payee": {
+            "type": "string",
+            "enum": [
+              "CREDITOR",
+              "TRUEACCORD"
+            ],
+            "description": "* `CREDITOR`: Use when payment made directly to creditor. \n* `TRUEACCORD`: Use when payment made to TrueAccord.\n",
+            "example": "CREDITOR"
+          },
+          "transactionReference": {
+            "type": "string",
+            "description": "Used to associate payment to transaction on creditor's internal system."
+          },
+          "transactionType": {
+            "type": "string",
+            "enum": [
+              "PAYMENT",
+              "RETURNED_PAYMENT",
+              "REFUND"
+            ],
+            "example": "PAYMENT",
+            "description": "* `PAYMENT`: Use for standard payment. Deducts the debt balance. Amount must be positive. \n* `RETURNED_PAYMENT`: Use for payment that failed after it was declared successful. Typically used when ACH payments return or when creditor refunds customer. The payment increases the debt balance. Must be negative.\n* `REFUND`: Use for payment refunded after it was made. Increases debt's balance. Must be negative.\n"
+          },
+          "note": {
+            "type": "string",
+            "description": "Note about the payment.",
+            "example": "Paid directly via CC"
+          },
+          "paymentTimestamp": {
+            "type": "integer",
+            "description": "Time payment was created in milliseconds since Jan 1st, 1970 UTC. If not directly provided by user during payment creation, then same as `meta.timeCreated`."
+          }
+        }
+      },
+      "PaymentRequest": {
+        "type": "object",
+        "properties": {
+          "amount": {
+            "$ref": "#/components/schemas/MonetaryAmount"
+          },
+          "payee": {
+            "type": "string",
+            "enum": [
+              "CREDITOR",
+              "TRUEACCORD"
+            ],
+            "example": "CREDITOR",
+            "description": "* `CREDITOR`: Use when payment made directly to creditor. \n* `TRUEACCORD`: Use when payment made to TrueAccord.\n"
+          },
+          "transactionReference": {
+            "type": "string",
+            "description": "Used to associate payment to transaction on creditor's internal system."
+          },
+          "transactionType": {
+            "type": "string",
+            "enum": [
+              "PAYMENT",
+              "RETURNED_PAYMENT",
+              "REFUND"
+            ],
+            "example": "PAYMENT",
+            "description": "* `PAYMENT`: Use for standard payment. Deducts the debt balance. Amount must be positive. \n* `RETURNED_PAYMENT`: Use for payment that failed after it was declared successful. Typically used when ACH payments return or when creditor refunds customer. The payment increases the debt balance. Must be negative.\n* `REFUND`: Use for payment refunded after it was made. Increases debt's balance. Must be negative.\n"
+          },
+          "note": {
+            "type": "string",
+            "description": "Note about the payment.",
+            "example": "Paid directly via CC"
+          },
+          "paymentTimestamp": {
+            "description": "Optional. Time payment was created in milliseconds since Jan 1st, 1970 UTC.. If not directly provided by user during payment creation, then the response will provide the same value as the `meta.timeCreated`.",
+            "type": "integer"
+          }
+        }
+      },
+      "PaymentPlan": {
+        "type": "object",
+        "properties": {
+          "application": {
+            "type": "object",
+            "properties": {
+              "originatingTokenId": {
+                "type": "string",
+                "example": "6edb055cbcf94dea8abb4f71bfac38f9"
+              },
+              "installments": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "dueDate": {
+                      "$ref": "#/components/schemas/TimeStamp"
+                    },
+                    "amount": {
+                      "$ref": "#/components/schemas/MonetaryAmount"
+                    }
+                  }
+                }
+              },
+              "paymentAmount": {
+                "$ref": "#/components/schemas/MonetaryAmount"
+              },
+              "numberOfInstallments": {
+                "type": "integer",
+                "example": 6
+              },
+              "startDate": {
+                "$ref": "#/components/schemas/TimeStamp"
+              },
+              "frequency": {
+                "type": "string",
+                "example": "MONTHLY"
+              },
+              "consent": {
+                "type": "object",
+                "properties": {
+                  "ip": {
+                    "type": "string",
+                    "example": "0:0:0:0:0:0:0:1"
+                  },
+                  "time": {
+                    "$ref": "#/components/schemas/TimeStamp"
+                  }
+                }
+              },
+              "debtId": {
+                "type": "string",
+                "example": "92101cfb7ef50724ed584d070eac4840"
+              },
+              "startCalendarDay": {
+                "$ref": "#/components/schemas/Date"
+              },
+              "reason": {
+                "type": "string",
+                "example": "REQUEST_FOR_SPECIFIC_TERMS"
+              },
+              "createdByUserAccount": {
+                "type": "string",
+                "example": "deadbeefdeadbeefdeadbeefdeadbeef"
+              },
+              "amountToPay": {
+                "$ref": "#/components/schemas/MonetaryAmount"
+              },
+              "discount": {
+                "$ref": "#/components/schemas/MonetaryAmount"
+              }
+            }
+          },
+          "nextInstallment": {
+            "type": "integer",
+            "example": 1
+          },
+          "paymentMethodInfo": {
+            "type": "object",
+            "properties": {
+              "cardInfo": {
+                "type": "object",
+                "properties": {
+                  "expirationMonth": {
+                    "type": "string",
+                    "example": "01"
+                  },
+                  "expirationYear": {
+                    "type": "string",
+                    "example": "2022"
+                  },
+                  "binNumber": {
+                    "type": "string",
+                    "example": "411111"
+                  },
+                  "billingZipCode": {
+                    "type": "string",
+                    "example": "94110"
+                  },
+                  "cardType": {
+                    "type": "string",
+                    "example": "VISA"
+                  },
+                  "lastFourDigits": {
+                    "type": "string",
+                    "example": "1111"
+                  }
+                }
+              }
+            }
+          },
+          "revocation": {
+            "type": "object",
+            "properties": {
+              "date": {
+                "$ref": "#/components/schemas/TimeStamp"
+              },
+              "reason": {
+                "type": "string",
+                "example": "REQUESTED_PLAN_CANCELLATION"
+              },
+              "revocationReason": {
+                "type": "string",
+                "example": "REQUESTED_PLAN_CANCELLATION"
+              }
+            }
+          },
+          "fullyPaid": {
+            "type": "boolean",
+            "example": false
+          },
+          "installments": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "installmentAmount": {
+                  "$ref": "#/components/schemas/MonetaryAmount"
+                },
+                "dueDate": {
+                  "$ref": "#/components/schemas/TimeStamp"
+                },
+                "datePaid": {
+                  "$ref": "#/components/schemas/TimeStamp"
+                },
+                "amountDue": {
+                  "$ref": "#/components/schemas/MonetaryAmount"
+                },
+                "status": {
+                  "type": "string",
+                  "example": "PAID_ON_TIME"
+                },
+                "isPaid": {
+                  "type": "boolean",
+                  "example": true
+                }
+              }
+            }
+          },
+          "debtStateId": {
+            "type": "string",
+            "example": "6fef79e2339d4f9e83ee1eb61d42b634"
+          },
+          "isRecurring": {
+            "type": "boolean",
+            "example": true
+          }
+        }
+      },
+      "AttorneyRepresentation": {
+        "type": "object",
+        "properties": {
+          "contactInfo": {
+            "type": "object",
+            "properties": {
+              "name": {
+                "type": "string",
+                "description": "Attorney's firm name",
+                "example": "Big Law firm"
+              },
+              "phoneNumber": {
+                "type": "object",
+                "properties": {
+                  "phoneNumber": {
+                    "type": "string",
+                    "example": "123-456-7890"
+                  },
+                  "dataSource": {
+                    "type": "object",
+                    "properties": {
+                      "type": {
+                        "type": "string",
+                        "example": "CREDITOR"
+                      }
+                    }
+                  },
+                  "consent": {
+                    "type": "integer",
+                    "description": "Timestamp from January 1, 1970 UTC. Time consent was provided.",
+                    "example": 1595627933618
+                  },
+                  "types": {
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "enum": [
+                        "WORK",
+                        "CELL",
+                        "HOME",
+                        "BUSINESS"
+                      ]
+                    }
+                  }
+                }
+              },
+              "address": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "object",
+                    "properties": {
+                      "firstName": {
+                        "type": "string",
+                        "example": "Joanna"
+                      },
+                      "middleName": {
+                        "type": "string",
+                        "example": "Q"
+                      },
+                      "lastName": {
+                        "type": "string",
+                        "example": "Smith"
+                      }
+                    }
+                  },
+                  "streetLine1": {
+                    "type": "string",
+                    "example": "101 N First St"
+                  },
+                  "streetLine2": {
+                    "type": "string",
+                    "example": "Office 2"
+                  },
+                  "streetLine3": {
+                    "type": "string",
+                    "example": "C/O Joanna Smith"
+                  },
+                  "city": {
+                    "type": "string",
+                    "example": "San Jose"
+                  },
+                  "state": {
+                    "type": "string",
+                    "example": "CA"
+                  },
+                  "zipcode": {
+                    "type": "string",
+                    "example": "55555"
+                  },
+                  "countryCode": {
+                    "type": "string",
+                    "example": "US"
+                  }
+                }
+              }
+            }
+          },
+          "email": {
+            "type": "string",
+            "example": "joanna@biglawfirm.com",
+            "description": "Attorney's contact email"
+          },
+          "requestedBy": {
+            "type": "string",
+            "example": "POWER_OF_ATTORNEY"
+          },
+          "communicationType": {
+            "type": "string",
+            "example": "WRITTEN"
+          },
+          "receivedPowerOfAttorneyDocumentation": {
+            "type": "boolean",
+            "example": true
+          },
+          "offerPercentOfBalance": {
+            "type": "integer",
+            "example": 80
+          },
+          "offerDurationInMonths": {
+            "type": "integer",
+            "example": 6
+          }
+        }
+      },
+      "DebtConsolidatorRepresentation": {
+        "type": "object",
+        "properties": {
+          "contactInfo": {
+            "type": "object",
+            "properties": {
+              "debtConsolidatorType": {
+                "type": "string",
+                "enum": [
+                  "CREDIT_SOLUTIONS",
+                  "FREEDOM_FINANCIAL",
+                  "AMERICAN_FREEDOM_FINANCIAL",
+                  "DEBT_SETTLEMENT_USA",
+                  "US_DEBT_RELIEF",
+                  "ACCELERATE_DEBT_MANAGEMENT_GROUP",
+                  "PACIFIC_DEBT",
+                  "NATIONAL_DEBT_RELIEF",
+                  "CHRISTIAN_DEBT_REMOVERS",
+                  "LIBERTY_SETTLEMENT_GROUP",
+                  "CORPORATE_TURNAROUND",
+                  "LAW_OFFICES_OF_MATTHEW_GUTHRIE",
+                  "SEIDELMAN_PALMER",
+                  "JASON_HASS_GROUP",
+                  "ROLL_LAW_OFFICE",
+                  "OTHER"
+                ],
+                "example": "FREEDOM_FINANCIAL"
+              },
+              "name": {
+                "type": "string",
+                "description": "Debt consolidator's name",
+                "example": "Big Debt Consolidation"
+              },
+              "phoneNumber": {
+                "type": "object",
+                "properties": {
+                  "phoneNumber": {
+                    "type": "string",
+                    "example": "123-456-7890"
+                  },
+                  "dataSource": {
+                    "type": "object",
+                    "properties": {
+                      "type": {
+                        "type": "string",
+                        "example": "CREDITOR"
+                      }
+                    }
+                  },
+                  "consent": {
+                    "type": "integer",
+                    "description": "Timestamp from January 1, 1970 UTC. Time consent was provided.",
+                    "example": 1595627933618
+                  },
+                  "types": {
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "enum": [
+                        "WORK",
+                        "CELL",
+                        "HOME",
+                        "BUSINESS"
+                      ]
+                    }
+                  }
+                }
+              },
+              "address": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "object",
+                    "properties": {
+                      "firstName": {
+                        "type": "string",
+                        "example": "Joanna"
+                      },
+                      "middleName": {
+                        "type": "string",
+                        "example": "Q"
+                      },
+                      "lastName": {
+                        "type": "string",
+                        "example": "Smith"
+                      }
+                    }
+                  },
+                  "streetLine1": {
+                    "type": "string",
+                    "example": "101 N First St"
+                  },
+                  "streetLine2": {
+                    "type": "string",
+                    "example": "Office 2"
+                  },
+                  "streetLine3": {
+                    "type": "string",
+                    "example": "C/O Joanna Smith"
+                  },
+                  "city": {
+                    "type": "string",
+                    "example": "San Jose"
+                  },
+                  "state": {
+                    "type": "string",
+                    "example": "CA"
+                  },
+                  "zipcode": {
+                    "type": "string",
+                    "example": "55555"
+                  },
+                  "countryCode": {
+                    "type": "string",
+                    "example": "US"
+                  }
+                }
+              }
+            }
+          },
+          "email": {
+            "type": "string",
+            "example": "joanna@biglawfirm.com",
+            "description": "Attorney's contact email"
+          },
+          "requestedBy": {
+            "type": "string",
+            "example": "POWER_OF_ATTORNEY"
+          },
+          "communicationType": {
+            "type": "string",
+            "example": "WRITTEN"
+          },
+          "receivedPowerOfAttorneyDocumentation": {
+            "type": "boolean",
+            "example": true
+          },
+          "offerPercentOfBalance": {
+            "type": "integer",
+            "example": 80
+          },
+          "offerDurationInMonths": {
+            "type": "integer",
+            "example": 6
+          }
+        }
+      },
+      "AttorneyDebtConsolidatorRepresentation": {
+        "type": "object",
+        "properties": {
+          "debtConsolidatorType": {
+            "type": "string",
+            "enum": [
+              "CREDIT_SOLUTIONS",
+              "FREEDOM_FINANCIAL",
+              "AMERICAN_FREEDOM_FINANCIAL",
+              "DEBT_SETTLEMENT_USA",
+              "US_DEBT_RELIEF",
+              "ACCELERATE_DEBT_MANAGEMENT_GROUP",
+              "PACIFIC_DEBT",
+              "NATIONAL_DEBT_RELIEF",
+              "CHRISTIAN_DEBT_REMOVERS",
+              "LIBERTY_SETTLEMENT_GROUP",
+              "CORPORATE_TURNAROUND",
+              "LAW_OFFICES_OF_MATTHEW_GUTHRIE",
+              "SEIDELMAN_PALMER",
+              "JASON_HASS_GROUP",
+              "ROLL_LAW_OFFICE",
+              "OTHER"
+            ],
+            "example": "FREEDOM_FINANCIAL"
+          },
+          "contactInfo": {
+            "type": "object",
+            "properties": {
+              "name": {
+                "type": "string",
+                "description": "Attorney's firm name",
+                "example": "Big Law firm"
+              },
+              "phoneNumber": {
+                "type": "object",
+                "properties": {
+                  "phoneNumber": {
+                    "type": "string",
+                    "example": "123-456-7890"
+                  },
+                  "dataSource": {
+                    "type": "object",
+                    "properties": {
+                      "type": {
+                        "type": "string",
+                        "example": "CREDITOR"
+                      }
+                    }
+                  },
+                  "consent": {
+                    "type": "integer",
+                    "description": "Timestamp from January 1, 1970 UTC. Time consent was provided.",
+                    "example": 1595627933618
+                  },
+                  "types": {
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "enum": [
+                        "WORK",
+                        "CELL",
+                        "HOME",
+                        "BUSINESS"
+                      ]
+                    }
+                  }
+                }
+              },
+              "address": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "object",
+                    "properties": {
+                      "firstName": {
+                        "type": "string",
+                        "example": "Joanna"
+                      },
+                      "middleName": {
+                        "type": "string",
+                        "example": "Q"
+                      },
+                      "lastName": {
+                        "type": "string",
+                        "example": "Smith"
+                      }
+                    }
+                  },
+                  "streetLine1": {
+                    "type": "string",
+                    "example": "101 N First St"
+                  },
+                  "streetLine2": {
+                    "type": "string",
+                    "example": "Office 2"
+                  },
+                  "streetLine3": {
+                    "type": "string",
+                    "example": "C/O Joanna Smith"
+                  },
+                  "city": {
+                    "type": "string",
+                    "example": "San Jose"
+                  },
+                  "state": {
+                    "type": "string",
+                    "example": "CA"
+                  },
+                  "zipcode": {
+                    "type": "string",
+                    "example": "55555"
+                  },
+                  "countryCode": {
+                    "type": "string",
+                    "example": "US"
+                  }
+                }
+              }
+            }
+          },
+          "email": {
+            "type": "string",
+            "example": "joanna@biglawfirm.com",
+            "description": "Attorney's contact email"
+          },
+          "requestedBy": {
+            "type": "string",
+            "example": "POWER_OF_ATTORNEY"
+          },
+          "communicationType": {
+            "type": "string",
+            "example": "WRITTEN"
+          },
+          "receivedPowerOfAttorneyDocumentation": {
+            "type": "boolean",
+            "example": true
+          }
+        }
+      },
+      "CancelDebtRepresentation": {
+        "type": "object",
+        "properties": {
+          "requestedBy": {
+            "type": "string",
+            "example": "POWER_OF_ATTORNEY"
+          },
+          "communicationType": {
+            "type": "string",
+            "example": "WRITTEN"
+          },
+          "reason": {
+            "type": "string",
+            "example": "cancelling representation"
+          }
+        }
+      },
+      "CreditorBrand": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "example": "DOING_BUSINESS_AS"
+          },
+          "name": {
+            "type": "string",
+            "example": "Some Business, Inc."
+          },
+          "address": {
+            "$ref": "#/components/schemas/Addresses/items"
+          },
+          "meta": {
+            "type": "object",
+            "properties": {
+              "isPrimary": {
+                "type": "boolean",
+                "example": false
+              },
+              "id": {
+                "type": "string",
+                "example": "123456789"
+              },
+              "isActive": {
+                "type": "boolean",
+                "example": true
+              },
+              "versionInfo": {
+                "type": "object",
+                "properties": {
+                  "versionNumber": {
+                    "type": "integer",
+                    "example": 0
+                  }
+                }
+              },
+              "lastModified": {
+                "$ref": "#/components/schemas/TimeStamp"
+              },
+              "timeCreated": {
+                "$ref": "#/components/schemas/TimeStamp"
+              }
+            }
+          },
+          "description": {
+            "type": "string",
+            "example": "Overview of the business goes here."
+          },
+          "websiteUrl": {
+            "type": "string",
+            "example": "https://somebusinessinc.com"
+          },
+          "logoUrl": {
+            "type": "string",
+            "example": "https://somebusinessinc.com/static/img/logo.png"
+          }
+        }
+      },
+      "CreditorInfo": {
+        "type": "object",
+        "properties": {
+          "companyName": {
+            "type": "string",
+            "example": "Big Creditor, Inc."
+          },
+          "industry": {
+            "type": "string",
+            "example": "Credit industry"
+          },
+          "environment": {
+            "type": "string",
+            "example": "LIVE"
+          },
+          "activationStatus": {
+            "type": "string",
+            "example": "ACTIVE"
+          },
+          "commissionPercentBasisPoint": {
+            "type": "string",
+            "example": "2"
+          }
+        }
+      }
+    },
+    "parameters": {
+      "CustomerId": {
+        "in": "path",
+        "name": "customerId",
+        "required": true,
+        "schema": {
+          "type": "string"
+        },
+        "description": "TrueAccord Customer ID"
+      },
+      "DebtId": {
+        "in": "path",
+        "name": "debtId",
+        "required": true,
+        "schema": {
+          "type": "string"
+        },
+        "description": "TrueAccord Debt ID"
+      },
+      "CreditorId": {
+        "in": "path",
+        "name": "creditorId",
+        "required": true,
+        "schema": {
+          "type": "string"
+        },
+        "description": "TrueAccord Creditor ID"
+      },
+      "StartTime": {
+        "in": "query",
+        "name": "startTime",
+        "schema": {
+          "$ref": "#/components/schemas/TimeStamp"
+        },
+        "description": "Display only results created after the `startTime` value."
+      },
+      "EndTime": {
+        "in": "query",
+        "name": "endTime",
+        "schema": {
+          "$ref": "#/components/schemas/TimeStamp"
+        },
+        "description": "Display only results created before the `endTime` value."
+      }
+    }
+  }
+}
