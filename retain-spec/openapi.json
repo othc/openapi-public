@@ -1,33 +1,15 @@
 {
   "openapi": "3.0.0",
   "info": {
-    "version": "0.0.2",
+    "version": "0.0.5",
     "title": "TrueAccord Retain Inbound API",
-    "x-logo": {
-      "url": "https://raw.githubusercontent.com/othc/openapi-public/master/assets/trueaccord-logo-blue-background.png"
-    }
+    "description": "TrueAccord Retain Inbound API"
   },
-  "tags": [
-    {
-      "name": "Account Placements",
-      "x-displayName": "Account Placements",
-      "description": "Add and retract accounts."
-    },
-    {
-      "name": "Payments",
-      "x-displayName": "Payments",
-      "description": "Endpoints related to account payments"
-    }
-  ],
   "paths": {
     "/placement": {
       "post": {
-        "summary": "Add accounts",
-        "description": "Account placements and updates. When an account is placed, we will immediately start communications with the account, and will only stop when the account is retracted.",
-        "tags": [
-          "Account Placements"
-        ],
         "requestBody": {
+          "description": "Account placements and updates. When an account is placed, we will immediately start communications with the account, and will only stop when the account is retracted.",
           "required": true,
           "content": {
             "application/json": {
@@ -47,8 +29,36 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "string",
-                  "example": "ok"
+                  "$ref": "#/components/schemas/InboundAPIResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "requestBody": {
+          "description": "Account placements patch. This patch only updates account information. It can have the same body payload as the POST option, but only clientId (comes from the encrypted apikey), accountNamespace and accountNumber is required.",
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/PlacementInformationPatch"
+                },
+                "minItems": 1
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "successful operation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InboundAPIResponse"
                 }
               }
             }
@@ -58,12 +68,8 @@
     },
     "/retraction": {
       "post": {
-        "summary": "Retract accounts",
-        "description": "Account retractions - the platform will stop sending communications and close them for all accounts specified through this endpoint.",
-        "tags": [
-          "Account Placements"
-        ],
         "requestBody": {
+          "description": "Account retractions - the platform will stop sending communications and close them for all accounts specified through this endpoint.",
           "required": true,
           "content": {
             "application/json": {
@@ -83,8 +89,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "string",
-                  "example": "ok"
+                  "$ref": "#/components/schemas/InboundAPIResponse"
                 }
               }
             }
@@ -94,12 +99,8 @@
     },
     "/payments": {
       "post": {
-        "summary": "Add payments to account",
-        "description": "Account payments - our platform will take this information as information only to judge the success of our platforms. This will lead to better optimization of our communication strategy. This DOES NOT affect the account in any ways - you will still need to send us balance updates separately.",
-        "tags": [
-          "Payments"
-        ],
         "requestBody": {
+          "description": "Account payments - our platform will take this information as information only to judge the success of our platforms. This will lead to better optimization of our communication strategy. This DOES NOT affect the account in any ways - you will still need to send us balance updates separately.",
           "required": true,
           "content": {
             "application/json": {
@@ -119,8 +120,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "string",
-                  "example": "ok"
+                  "$ref": "#/components/schemas/InboundAPIResponse"
                 }
               }
             }
@@ -130,6 +130,12 @@
     }
   },
   "components": {
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer"
+      }
+    },
     "schemas": {
       "PlacementInformation": {
         "type": "object",
@@ -270,24 +276,24 @@
             "pattern": "^\\d{5}$"
           },
           "totalAmountDue": {
-            "type": "number",
-            "format": "double",
-            "description": "The total amount that the customer owes on the account (past due + currently due) preferred format 00.00."
+            "type": "integer",
+            "format": "int64",
+            "description": "The total amount that the customer owes on the account (past due + currently due). Amount is in cents"
           },
           "currentAmountDue": {
-            "type": "number",
-            "format": "double",
-            "description": "Amount due for this billing cycle. Preferred format 00.00."
+            "type": "integer",
+            "format": "int64",
+            "description": "Amount due for this billing cycle. Amount is in cents"
           },
           "currentBalance": {
-            "type": "number",
-            "format": "double",
-            "description": "The current balance on the account. Preferred format 00.00"
+            "type": "integer",
+            "format": "int64",
+            "description": "The current balance on the account. Amount is in cents"
           },
           "totalDelinquentAmount": {
-            "type": "number",
-            "format": "double",
-            "description": "The current delinquent amount on the account. Preferred format 00.00"
+            "type": "integer",
+            "format": "int64",
+            "description": "The current delinquent amount on the account. Amount is in cents"
           },
           "delinquencyDate": {
             "type": "string",
@@ -300,9 +306,9 @@
             "description": "The numbers of cycles that the account is delinquent (number > 0)."
           },
           "lastPaymentAmount": {
-            "type": "number",
-            "format": "double",
-            "description": "The amount of the last customer payment. Preferred format 00.00"
+            "type": "integer",
+            "format": "int64",
+            "description": "The amount of the last customer payment. Amount is in cents"
           },
           "lastPaymentDate": {
             "type": "string",
@@ -310,19 +316,19 @@
             "description": "The date of the last customer payment (mm/dd/yy)"
           },
           "monthToDateFeesPaid": {
-            "type": "number",
-            "format": "double",
-            "description": "Month to Date Fees Paid. Preferred format 00.00"
+            "type": "integer",
+            "format": "int64",
+            "description": "Month to Date Fees Paid. Amount is in cents"
           },
           "monthToDateInterestPaid": {
-            "type": "number",
-            "format": "double",
-            "description": "Month to Date Interest Paid. Preferred format 00.00"
+            "type": "integer",
+            "format": "int64",
+            "description": "Month to Date Interest Paid. Amount is in cents"
           },
           "monthToDatePrincipalPaid": {
-            "type": "number",
-            "format": "double",
-            "description": "Month to Date Principal Paid. Preferred format 00.00"
+            "type": "integer",
+            "format": "int64",
+            "description": "Month to Date Principal Paid. Amount is in cents"
           },
           "placementNumber": {
             "type": "integer",
@@ -356,6 +362,210 @@
           "delinquencyDate",
           "cyclesDelinquent",
           "placementNumber"
+        ]
+      },
+      "PlacementInformationPatch": {
+        "type": "object",
+        "properties": {
+          "accountNumber": {
+            "type": "string",
+            "description": "Client account number"
+          },
+          "accountNamespace": {
+            "type": "string",
+            "description": "Differentiates accounts across geographic regions or business units"
+          },
+          "accountRelationship": {
+            "type": "string",
+            "enum": [
+              "SIGNER",
+              "COSIGNER"
+            ],
+            "description": "The relationship of the person in this demographic record to the account"
+          },
+          "accountOpenDate": {
+            "type": "string",
+            "pattern": "^\\d{2}-\\d{2}-\\d{2}$",
+            "description": "The date the account was originally opened (mm/dd/yy)"
+          },
+          "brandID": {
+            "type": "integer",
+            "format": "int32",
+            "description": "An ID representing the brand they want us to represent. This allows us to use different first-party messaging and themes for different brands. We will provide you a set to use."
+          },
+          "productType": {
+            "type": "string",
+            "enum": [
+              "AUTO",
+              "HEL",
+              "HELOC",
+              "CARD",
+              "UNSECURED"
+            ],
+            "description": "Product type of the account"
+          },
+          "dateAssigned": {
+            "type": "string",
+            "pattern": "^\\d{2}-\\d{2}-\\d{2}$",
+            "description": "The date the account was placed with TrueAccord (mm/dd/yy)"
+          },
+          "expectedRetractionDate": {
+            "type": "string",
+            "pattern": "^\\d{2}-\\d{2}-\\d{2}$",
+            "description": "The latest date the account will be retracted from TrueAccord. (mm/dd/yy)"
+          },
+          "transactionDate": {
+            "type": "string",
+            "pattern": "^\\d{2}-\\d{2}-\\d{2}$",
+            "description": "The date the record was generated (mm/dd/yy)"
+          },
+          "firstName": {
+            "type": "string",
+            "description": "The first name for this demographic entry"
+          },
+          "lastName": {
+            "type": "string",
+            "description": "The last name for this demographic entry"
+          },
+          "middleName": {
+            "type": "string",
+            "description": "The middle name for this demographic entry"
+          },
+          "prefix": {
+            "type": "string",
+            "description": "The prefix for this demographic entry"
+          },
+          "suffix": {
+            "type": "string",
+            "description": "The suffix for this demographic entry"
+          },
+          "email1": {
+            "type": "string",
+            "format": "email",
+            "description": "First email address for this demographic entry"
+          },
+          "email2": {
+            "type": "string",
+            "format": "email",
+            "description": "Second email address for this demographic entry"
+          },
+          "email3": {
+            "type": "string",
+            "format": "email",
+            "description": "Third email address for this demographic entry"
+          },
+          "telephone1": {
+            "type": "string",
+            "description": "First telephone number for this demographic entry (in a 10-digit format e.g. 8666112731)",
+            "pattern": "^\\d{10}$"
+          },
+          "telephone2": {
+            "type": "string",
+            "description": "Second telephone number for this demographic entry (in a 10-digit format e.g. 8666112731)",
+            "pattern": "^\\d{10}$"
+          },
+          "telephone3": {
+            "type": "string",
+            "description": "Third telephone number for this demographic entry (in a 10-digit format e.g. 8666112731)",
+            "pattern": "^\\d{10}$"
+          },
+          "addressLine1": {
+            "type": "string",
+            "description": "The first line of the address for this demographic entry. Include building number and street name. Separate from ‘Street Address 2,’ ‘City,’ ‘State,’and ‘ZIP Code.’"
+          },
+          "addressLine2": {
+            "type": "string",
+            "description": "The second line of the address for this demographic entry. Include building number and street name. Separate from ‘Street Address 1,’ ‘City,’ ‘State,’and ‘ZIP Code.’"
+          },
+          "addressLine3": {
+            "type": "string",
+            "description": "The third line of the address for this demographic entry."
+          },
+          "addressType": {
+            "type": "string",
+            "enum": [
+              "HOME",
+              "BUSINESS"
+            ],
+            "description": "The type of address transmitted in this record (ex. HOME, BUSINESS)"
+          },
+          "city": {
+            "type": "string",
+            "description": "The city for this demographic entry."
+          },
+          "state": {
+            "type": "string",
+            "description": "The state code for this demographic entry as two-letter abbreviations (e.g. CA, NY, etc.)."
+          },
+          "zipcode": {
+            "type": "string",
+            "description": "The ZIP code or Postal Code for this demographic entry. Write the 5-digit ZIP code.",
+            "pattern": "^\\d{5}$"
+          },
+          "totalAmountDue": {
+            "type": "integer",
+            "format": "int64",
+            "description": "The total amount that the customer owes on the account (past due + currently due). Amount is in cents"
+          },
+          "currentAmountDue": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Amount due for this billing cycle. Amount is in cents"
+          },
+          "currentBalance": {
+            "type": "integer",
+            "format": "int64",
+            "description": "The current balance on the account. Amount is in cents"
+          },
+          "totalDelinquentAmount": {
+            "type": "integer",
+            "format": "int64",
+            "description": "The current delinquent amount on the account. Amount is in cents"
+          },
+          "delinquencyDate": {
+            "type": "string",
+            "pattern": "^\\d{2}-\\d{2}-\\d{2}$",
+            "description": "Date that account became delinquent (mm/dd/yy)"
+          },
+          "cyclesDelinquent": {
+            "type": "integer",
+            "format": "int32",
+            "description": "The numbers of cycles that the account is delinquent (number > 0)."
+          },
+          "lastPaymentAmount": {
+            "type": "integer",
+            "format": "int64",
+            "description": "The amount of the last customer payment. Amount is in cents"
+          },
+          "lastPaymentDate": {
+            "type": "string",
+            "pattern": "^\\d{2}-\\d{2}-\\d{2}$",
+            "description": "The date of the last customer payment (mm/dd/yy)"
+          },
+          "monthToDateFeesPaid": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Month to Date Fees Paid. Amount is in cents"
+          },
+          "monthToDateInterestPaid": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Month to Date Interest Paid. Amount is in cents"
+          },
+          "monthToDatePrincipalPaid": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Month to Date Principal Paid. Amount is in cents"
+          },
+          "placementNumber": {
+            "type": "integer",
+            "format": "int32",
+            "description": "Number of consecutive cycles that the account has been placed with TrueAccord."
+          }
+        },
+        "required": [
+          "accountNumber",
+          "accountNamespace"
         ]
       },
       "RetractionInformation": {
@@ -408,9 +618,9 @@
             "description": "Free-form description of payment"
           },
           "paymentAmount": {
-            "type": "number",
-            "format": "double",
-            "description": "Amount of payment made. Preferred format 00.00"
+            "type": "integer",
+            "format": "int64",
+            "description": "Amount of payment made. Amount is in cents"
           },
           "transactionDate": {
             "type": "string",
@@ -437,7 +647,68 @@
           "transactionDate",
           "categoryCode"
         ]
+      },
+      "InboundAPIResponse": {
+        "type": "object",
+        "properties": {
+          "ClientId": {
+            "type": "string",
+            "description": "Client Id"
+          },
+          "Status": {
+            "type": "string",
+            "enum": [
+              "SUCCESS",
+              "FAILURE",
+              "ERROR"
+            ],
+            "description": "Response status (SUCCESS, FAILURE OR ERROR)"
+          },
+          "Message": {
+            "type": "string",
+            "description": "Message description"
+          },
+          "ProcessedRecords": {
+            "type": "integer",
+            "format": "int32",
+            "description": "Number or records processed"
+          },
+          "FailedRecords": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/FailedRecord"
+            }
+          }
+        }
+      },
+      "FailedRecord": {
+        "type": "object",
+        "properties": {
+          "AccountNumber": {
+            "type": "string",
+            "description": "AccountNumber of the record that has failed"
+          },
+          "AccountNamespace": {
+            "type": "string",
+            "description": "AccountNamespace of the record that has failed"
+          },
+          "Message": {
+            "type": "string",
+            "description": "Error Detail"
+          }
+        }
       }
     }
-  }
+  },
+  "security": [
+    {
+      "bearerAuth": []
+    }
+  ],
+  "servers": [
+    {
+      "description": "SwaggerHub API Auto Mocking",
+      "url": "https://virtserver.swaggerhub.com/felipediazc/integration/0.0.2"
+    }
+  ]
 }
