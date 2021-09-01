@@ -5,11 +5,27 @@
     "title": "TrueAccord Retain Inbound API",
     "description": "TrueAccord Retain Inbound API"
   },
+  "tags": [
+    {
+      "name": "Account Placements",
+      "x-displayName": "Account Placements",
+      "description": "Add and retract accounts."
+    },
+    {
+      "name": "Payments",
+      "x-displayName": "Payments",
+      "description": "Endpoints related to account payments"
+    }
+  ],
   "paths": {
     "/placement": {
       "post": {
+        "summary": "Add Accounts",
+        "description": "Account placements and updates. When an account is placed, we will immediately start communications with the account, and will only stop when the account is retracted.",
+        "tags": [
+          "Account Placements"
+        ],
         "requestBody": {
-          "description": "Account placements and updates. When an account is placed, we will immediately start communications with the account, and will only stop when the account is retracted.",
           "required": true,
           "content": {
             "application/json": {
@@ -37,8 +53,12 @@
         }
       },
       "patch": {
+        "summary": "Update Account Information",
+        "description": "Account placements patch. This patch only updates account information. It can have the same body payload as the POST option, but only clientId (comes from the encrypted apikey), accountNamespace and accountNumber is required.",
+        "tags": [
+          "Account Placements"
+        ],
         "requestBody": {
-          "description": "Account placements patch. This patch only updates account information. It can have the same body payload as the POST option, but only clientId (comes from the encrypted apikey), accountNamespace and accountNumber is required.",
           "required": true,
           "content": {
             "application/json": {
@@ -68,8 +88,12 @@
     },
     "/retraction": {
       "post": {
+        "summary": "Retract Account",
+        "description": "Account retractions - the platform will stop sending communications and close them for all accounts specified through this endpoint.",
+        "tags": [
+          "Account Placements"
+        ],
         "requestBody": {
-          "description": "Account retractions - the platform will stop sending communications and close them for all accounts specified through this endpoint.",
           "required": true,
           "content": {
             "application/json": {
@@ -99,8 +123,12 @@
     },
     "/payments": {
       "post": {
+        "summary": "Add Payments to Account",
+        "description": "Account payments - our platform will take this information as information only to judge the success of our platforms. This will lead to better optimization of our communication strategy. This DOES NOT affect the account in any ways - you will still need to send us balance updates separately.",
+        "tags": [
+          "Payments"
+        ],
         "requestBody": {
-          "description": "Account payments - our platform will take this information as information only to judge the success of our platforms. This will lead to better optimization of our communication strategy. This DOES NOT affect the account in any ways - you will still need to send us balance updates separately.",
           "required": true,
           "content": {
             "application/json": {
