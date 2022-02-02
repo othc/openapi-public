@@ -1,7 +1,11 @@
 pull_request_rules:
   - name: Automatic merge on approval
     conditions:
-      - "#approved-reviews-by>=1"
+      - and:
+        - "approved-reviews-by=@othc/dp"
+        - "approved-reviews-by=@othc/data"
     actions:
+      comment:
+        message: PR was approved by the two required teams!
       merge:
         method: merge
