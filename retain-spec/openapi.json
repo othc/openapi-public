@@ -18,7 +18,7 @@
     }
   ],
   "paths": {
-    "/placement": {
+    "/inbound/v1/placement": {
       "post": {
         "summary": "Add Accounts",
         "description": "Account placements and updates. When an account is placed, we will immediately start communications with the account, and will only stop when the account is retracted.",
@@ -86,7 +86,7 @@
         }
       }
     },
-    "/retraction": {
+    "/inbound/v1/retraction": {
       "post": {
         "summary": "Retract Account",
         "description": "Account retractions - the platform will stop sending communications and close them for all accounts specified through this endpoint.",
@@ -121,7 +121,7 @@
         }
       }
     },
-    "/payments": {
+    "/inbound/v1/payments": {
       "post": {
         "summary": "Add Payments to Account",
         "description": "Account payments - our platform will take this information as information only to judge the success of our platforms. This will lead to better optimization of our communication strategy. This DOES NOT affect the account in any ways - you will still need to send us balance updates separately.",
@@ -186,12 +186,12 @@
           },
           "accountOpenDate": {
             "type": "string",
-            "pattern": "^\\d{2}-\\d{2}-\\d{2}$",
+            "pattern": "^\\d{2}/\\d{2}/\\d{4}$",
             "description": "The date the account was originally opened (mm/dd/yy)"
           },
           "brandID": {
-            "type": "integer",
-            "format": "int32",
+            "type": "string",
+            "format": "uuid",
             "description": "An ID representing the brand they want us to represent. This allows us to use different first-party messaging and themes for different brands. We will provide you a set to use."
           },
           "productType": {
@@ -207,17 +207,17 @@
           },
           "dateAssigned": {
             "type": "string",
-            "pattern": "^\\d{2}-\\d{2}-\\d{2}$",
+            "pattern": "^\\d{2}/\\d{2}/\\d{4}$",
             "description": "The date the account was placed with TrueAccord (mm/dd/yy)"
           },
           "expectedRetractionDate": {
             "type": "string",
-            "pattern": "^\\d{2}-\\d{2}-\\d{2}$",
+            "pattern": "^\\d{2}/\\d{2}/\\d{4}$",
             "description": "The latest date the account will be retracted from TrueAccord. (mm/dd/yy)"
           },
           "transactionDate": {
             "type": "string",
-            "pattern": "^\\d{2}-\\d{2}-\\d{2}$",
+            "pattern": "^\\d{2}/\\d{2}/\\d{4}$",
             "description": "The date the record was generated (mm/dd/yy)"
           },
           "firstName": {
@@ -325,7 +325,7 @@
           },
           "delinquencyDate": {
             "type": "string",
-            "pattern": "^\\d{2}-\\d{2}-\\d{2}$",
+            "pattern": "^\\d{2}/\\d{2}/\\d{4}$",
             "description": "Date that account became delinquent (mm/dd/yy)"
           },
           "cyclesDelinquent": {
@@ -340,7 +340,7 @@
           },
           "lastPaymentDate": {
             "type": "string",
-            "pattern": "^\\d{2}-\\d{2}-\\d{2}$",
+            "pattern": "^\\d{2}/\\d{2}/\\d{4}$",
             "description": "The date of the last customer payment (mm/dd/yy)"
           },
           "monthToDateFeesPaid": {
@@ -413,12 +413,12 @@
           },
           "accountOpenDate": {
             "type": "string",
-            "pattern": "^\\d{2}-\\d{2}-\\d{2}$",
+            "pattern": "^\\d{2}/\\d{2}/\\d{4}$",
             "description": "The date the account was originally opened (mm/dd/yy)"
           },
           "brandID": {
-            "type": "integer",
-            "format": "int32",
+            "type": "string",
+            "format": "uuid",
             "description": "An ID representing the brand they want us to represent. This allows us to use different first-party messaging and themes for different brands. We will provide you a set to use."
           },
           "productType": {
@@ -434,17 +434,17 @@
           },
           "dateAssigned": {
             "type": "string",
-            "pattern": "^\\d{2}-\\d{2}-\\d{2}$",
+            "pattern": "^\\d{2}/\\d{2}/\\d{4}$",
             "description": "The date the account was placed with TrueAccord (mm/dd/yy)"
           },
           "expectedRetractionDate": {
             "type": "string",
-            "pattern": "^\\d{2}-\\d{2}-\\d{2}$",
+            "pattern": "^\\d{2}/\\d{2}/\\d{4}$",
             "description": "The latest date the account will be retracted from TrueAccord. (mm/dd/yy)"
           },
           "transactionDate": {
             "type": "string",
-            "pattern": "^\\d{2}-\\d{2}-\\d{2}$",
+            "pattern": "^\\d{2}/\\d{2}/\\d{4}$",
             "description": "The date the record was generated (mm/dd/yy)"
           },
           "firstName": {
@@ -552,7 +552,7 @@
           },
           "delinquencyDate": {
             "type": "string",
-            "pattern": "^\\d{2}-\\d{2}-\\d{2}$",
+            "pattern": "^\\d{2}/\\d{2}/\\d{4}$",
             "description": "Date that account became delinquent (mm/dd/yy)"
           },
           "cyclesDelinquent": {
@@ -567,7 +567,7 @@
           },
           "lastPaymentDate": {
             "type": "string",
-            "pattern": "^\\d{2}-\\d{2}-\\d{2}$",
+            "pattern": "^\\d{2}/\\d{2}/\\d{4}$",
             "description": "The date of the last customer payment (mm/dd/yy)"
           },
           "monthToDateFeesPaid": {
@@ -619,7 +619,7 @@
           },
           "recallDate": {
             "type": "string",
-            "pattern": "^\\d{2}-\\d{2}-\\d{2}$",
+            "pattern": "^\\d{2}/\\d{2}/\\d{4}$",
             "description": "The date that the account is scheduled to be recalled from TrueAccord (mm/dd/yy)"
           }
         },
@@ -652,7 +652,7 @@
           },
           "transactionDate": {
             "type": "string",
-            "pattern": "^\\d{2}-\\d{2}-\\d{2}$",
+            "pattern": "^\\d{2}/\\d{2}/\\d{4}$",
             "description": "Date the payment occurred (mm/dd/yy)"
           },
           "categoryCode": {
@@ -703,6 +703,7 @@
           },
           "FailedRecords": {
             "type": "array",
+            "nullable": true,
             "items": {
               "$ref": "#/components/schemas/FailedRecord"
             }
