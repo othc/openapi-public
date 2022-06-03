@@ -1,7 +1,7 @@
 {
   "openapi": "3.0.0",
   "info": {
-    "version": "0.0.5",
+    "version": "0.1.0",
     "title": "TrueAccord Retain Inbound API",
     "description": "TrueAccord Retain Inbound API"
   },
@@ -159,9 +159,10 @@
   },
   "components": {
     "securitySchemes": {
-      "bearerAuth": {
-        "type": "http",
-        "scheme": "bearer"
+      "ApiKeyAuth": {
+        "type": "apiKey",
+        "in": "header",
+        "name": "X-API-KEY"
       }
     },
     "schemas": {
@@ -192,7 +193,7 @@
           "brandID": {
             "type": "string",
             "format": "uuid",
-            "description": "An ID representing the brand they want us to represent. This allows us to use different first-party messaging and themes for different brands. We will provide you a set to use."
+            "description": "UUID of the brand to be represented. This enables different first-party theming for different brands under one client relationship. A Client Success Manager or Implementation Manager will provide you with the relevant ID(s) to use.."
           },
           "productType": {
             "type": "string",
@@ -260,15 +261,72 @@
             "description": "First telephone number for this demographic entry (in a 10-digit format e.g. 8666112731)",
             "pattern": "^\\d{10}$"
           },
+          "telephoneType1": {
+            "type": "string",
+            "enum": [
+              "HOME",
+              "WORK",
+              "CELL",
+              "FAX",
+              "BUSINESS"
+            ],
+            "description": "Type of the first telephone number"
+          },
+          "telephoneSMSConsent1": {
+            "type": "string",
+            "enum": [
+              "YES",
+              "NO"
+            ],
+            "description": "Consent flag for the first telephone number"
+          },
           "telephone2": {
             "type": "string",
             "description": "Second telephone number for this demographic entry (in a 10-digit format e.g. 8666112731)",
             "pattern": "^\\d{10}$"
           },
+          "telephoneType2": {
+            "type": "string",
+            "enum": [
+              "HOME",
+              "WORK",
+              "CELL",
+              "FAX",
+              "BUSINESS"
+            ],
+            "description": "Type of the second telephone number"
+          },
+          "telephoneSMSConsent2": {
+            "type": "string",
+            "enum": [
+              "YES",
+              "NO"
+            ],
+            "description": "Consent flag for the second telephone number"
+          },
           "telephone3": {
             "type": "string",
             "description": "Third telephone number for this demographic entry (in a 10-digit format e.g. 8666112731)",
             "pattern": "^\\d{10}$"
+          },
+          "telephoneType3": {
+            "type": "string",
+            "enum": [
+              "HOME",
+              "WORK",
+              "CELL",
+              "FAX",
+              "BUSINESS"
+            ],
+            "description": "Type of the third telephone number"
+          },
+          "telephoneSMSConsent3": {
+            "type": "string",
+            "enum": [
+              "YES",
+              "NO"
+            ],
+            "description": "Consent flag for the third telephone number"
           },
           "addressLine1": {
             "type": "string",
@@ -362,6 +420,11 @@
             "type": "integer",
             "format": "int32",
             "description": "Number of consecutive cycles that the account has been placed with TrueAccord."
+          },
+          "campaignId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "UUID of the campaign the account is a part of. Client Success Manager or Implementation Manager will provide you with the relevant ID(s) to use."
           }
         },
         "required": [
@@ -373,7 +436,6 @@
           "productType",
           "dateAssigned",
           "expectedRetractionDate",
-          "transactionDate",
           "firstName",
           "lastName",
           "email1",
@@ -388,8 +450,7 @@
           "currentBalance",
           "totalDelinquentAmount",
           "delinquencyDate",
-          "cyclesDelinquent",
-          "placementNumber"
+          "cyclesDelinquent"
         ]
       },
       "PlacementInformationPatch": {
@@ -487,15 +548,72 @@
             "description": "First telephone number for this demographic entry (in a 10-digit format e.g. 8666112731)",
             "pattern": "^\\d{10}$"
           },
+          "telephoneType1": {
+            "type": "string",
+            "enum": [
+              "HOME",
+              "WORK",
+              "CELL",
+              "FAX",
+              "BUSINESS"
+            ],
+            "description": "Type of the first telephone number"
+          },
+          "telephoneSMSConsent1": {
+            "type": "string",
+            "enum": [
+              "YES",
+              "NO"
+            ],
+            "description": "Consent flag for the first telephone number"
+          },
           "telephone2": {
             "type": "string",
             "description": "Second telephone number for this demographic entry (in a 10-digit format e.g. 8666112731)",
             "pattern": "^\\d{10}$"
           },
+          "telephoneType2": {
+            "type": "string",
+            "enum": [
+              "HOME",
+              "WORK",
+              "CELL",
+              "FAX",
+              "BUSINESS"
+            ],
+            "description": "Type of the second telephone number"
+          },
+          "telephoneSMSConsent2": {
+            "type": "string",
+            "enum": [
+              "YES",
+              "NO"
+            ],
+            "description": "Consent flag for the second telephone number"
+          },
           "telephone3": {
             "type": "string",
             "description": "Third telephone number for this demographic entry (in a 10-digit format e.g. 8666112731)",
             "pattern": "^\\d{10}$"
+          },
+          "telephoneType3": {
+            "type": "string",
+            "enum": [
+              "HOME",
+              "WORK",
+              "CELL",
+              "FAX",
+              "BUSINESS"
+            ],
+            "description": "Type of the third telephone number"
+          },
+          "telephoneSMSConsent3": {
+            "type": "string",
+            "enum": [
+              "YES",
+              "NO"
+            ],
+            "description": "Consent flag for the third telephone number"
           },
           "addressLine1": {
             "type": "string",
@@ -731,7 +849,7 @@
   },
   "security": [
     {
-      "bearerAuth": []
+      "apiKeyAuth": []
     }
   ],
   "servers": [
