@@ -193,7 +193,7 @@
           "brandID": {
             "type": "string",
             "format": "uuid",
-            "description": "UUID of the brand to be represented. This enables different first-party theming for different brands under one client relationship. A Client Success Manager or Implementation Manager will provide you with the relevant ID(s) to use.."
+            "description": "UUID of the brand to be represented. This enables different first-party theming for different brands under one client relationship. A Client Success Manager or Implementation Manager will provide you with the relevant ID(s) to use."
           },
           "productType": {
             "type": "string",
