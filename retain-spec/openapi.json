@@ -199,12 +199,19 @@
             "type": "string",
             "enum": [
               "AUTO",
+              "BNPL",
+              "CARD",
+              "FITNESS",
               "HEL",
               "HELOC",
-              "CARD",
-              "UNSECURED"
+              "UNSECURED",
+              "UTILITY"
             ],
             "description": "Product type of the account"
+          },
+          "productDescription": {
+            "type": "string",
+            "description": "This identifies the financial product to the consumer in content. Sample sentence: \"you have a delinquent balance on your [product description].\""
           },
           "dateAssigned": {
             "type": "string",
@@ -434,12 +441,15 @@
           "accountOpenDate",
           "brandID",
           "productType",
+          "productDescription",
           "dateAssigned",
           "expectedRetractionDate",
           "firstName",
           "lastName",
           "email1",
           "telephone1",
+          "telephoneType1",
+          "telephoneSMSConsent1",
           "addressLine1",
           "addressType",
           "city",
@@ -486,12 +496,19 @@
             "type": "string",
             "enum": [
               "AUTO",
+              "BNPL",
+              "CARD",
+              "FITNESS",
               "HEL",
               "HELOC",
-              "CARD",
-              "UNSECURED"
+              "UNSECURED",
+              "UTILITY"
             ],
             "description": "Product type of the account"
+          },
+          "productDescription": {
+            "type": "string",
+            "description": "This identifies the financial product to the consumer in content. Sample sentence: \"you have a delinquent balance on your [product description].\""
           },
           "dateAssigned": {
             "type": "string",
