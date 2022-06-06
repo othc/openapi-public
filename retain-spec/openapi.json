@@ -448,6 +448,8 @@
           "lastName",
           "email1",
           "telephone1",
+          "telephoneType1",
+          "telephoneSMSConsent1",
           "addressLine1",
           "addressType",
           "city",
