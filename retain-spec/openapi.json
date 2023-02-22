@@ -188,7 +188,7 @@
           "accountOpenDate": {
             "type": "string",
             "pattern": "^\\d{2}/\\d{2}/\\d{4}$",
-            "description": "The date the account was originally opened (mm/dd/yy)"
+            "description": "The date the account was originally opened (mm/dd/yyyy)"
           },
           "brandID": {
             "type": "string",
@@ -216,17 +216,17 @@
           "dateAssigned": {
             "type": "string",
             "pattern": "^\\d{2}/\\d{2}/\\d{4}$",
-            "description": "The date the account was placed with TrueAccord (mm/dd/yy)"
+            "description": "The date the account was placed with TrueAccord (mm/dd/yyyy)"
           },
           "expectedRetractionDate": {
             "type": "string",
             "pattern": "^\\d{2}/\\d{2}/\\d{4}$",
-            "description": "The latest date the account will be retracted from TrueAccord. (mm/dd/yy)"
+            "description": "The latest date the account will be retracted from TrueAccord. (mm/dd/yyyy)"
           },
           "transactionDate": {
             "type": "string",
             "pattern": "^\\d{2}/\\d{2}/\\d{4}$",
-            "description": "The date the record was generated (mm/dd/yy)"
+            "description": "The date the record was generated (mm/dd/yyyy)"
           },
           "firstName": {
             "type": "string",
@@ -391,7 +391,7 @@
           "delinquencyDate": {
             "type": "string",
             "pattern": "^\\d{2}/\\d{2}/\\d{4}$",
-            "description": "Date that account became delinquent (mm/dd/yy)"
+            "description": "Date that account became delinquent (mm/dd/yyyy)"
           },
           "cyclesDelinquent": {
             "type": "integer",
@@ -406,7 +406,7 @@
           "lastPaymentDate": {
             "type": "string",
             "pattern": "^\\d{2}/\\d{2}/\\d{4}$",
-            "description": "The date of the last customer payment (mm/dd/yy)"
+            "description": "The date of the last customer payment (mm/dd/yyyy)"
           },
           "monthToDateFeesPaid": {
             "type": "integer",
@@ -485,7 +485,7 @@
           "accountOpenDate": {
             "type": "string",
             "pattern": "^\\d{2}/\\d{2}/\\d{4}$",
-            "description": "The date the account was originally opened (mm/dd/yy)"
+            "description": "The date the account was originally opened (mm/dd/yyyy)"
           },
           "brandID": {
             "type": "string",
@@ -513,17 +513,17 @@
           "dateAssigned": {
             "type": "string",
             "pattern": "^\\d{2}/\\d{2}/\\d{4}$",
-            "description": "The date the account was placed with TrueAccord (mm/dd/yy)"
+            "description": "The date the account was placed with TrueAccord (mm/dd/yyyy)"
           },
           "expectedRetractionDate": {
             "type": "string",
             "pattern": "^\\d{2}/\\d{2}/\\d{4}$",
-            "description": "The latest date the account will be retracted from TrueAccord. (mm/dd/yy)"
+            "description": "The latest date the account will be retracted from TrueAccord. (mm/dd/yyyy)"
           },
           "transactionDate": {
             "type": "string",
             "pattern": "^\\d{2}/\\d{2}/\\d{4}$",
-            "description": "The date the record was generated (mm/dd/yy)"
+            "description": "The date the record was generated (mm/dd/yyyy)"
           },
           "firstName": {
             "type": "string",
@@ -688,7 +688,7 @@
           "delinquencyDate": {
             "type": "string",
             "pattern": "^\\d{2}/\\d{2}/\\d{4}$",
-            "description": "Date that account became delinquent (mm/dd/yy)"
+            "description": "Date that account became delinquent (mm/dd/yyyy)"
           },
           "cyclesDelinquent": {
             "type": "integer",
@@ -703,7 +703,7 @@
           "lastPaymentDate": {
             "type": "string",
             "pattern": "^\\d{2}/\\d{2}/\\d{4}$",
-            "description": "The date of the last customer payment (mm/dd/yy)"
+            "description": "The date of the last customer payment (mm/dd/yyyy)"
           },
           "monthToDateFeesPaid": {
             "type": "integer",
@@ -755,7 +755,7 @@
           "recallDate": {
             "type": "string",
             "pattern": "^\\d{2}/\\d{2}/\\d{4}$",
-            "description": "The date that the account is scheduled to be recalled from TrueAccord (mm/dd/yy)"
+            "description": "The date that the account is scheduled to be recalled from TrueAccord (mm/dd/yyyy)"
           }
         },
         "required": [
@@ -787,7 +787,7 @@
           "transactionDate": {
             "type": "string",
             "pattern": "^\\d{2}/\\d{2}/\\d{4}$",
-            "description": "Date the payment occurred (mm/dd/yy)"
+            "description": "Date the payment occurred (mm/dd/yyyy)"
           },
           "categoryCode": {
             "type": "string",
