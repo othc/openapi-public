@@ -31,7 +31,7 @@
     "/inbound/v1/placement": {
       "post": {
         "summary": "Add Accounts",
-        "description": "Account placements and updates. When an account is placed, we will immediately start communications with the account, and will cease communications when the account is retracted.",
+        "description": "Account placements and updates. When an account is placed, we will immediately start communications with the account, and will cease communications when the account is retracted. A maximum of 175 accounts/records can be placed in a single request.",
         "tags": [
           "Account Placements"
         ],
@@ -84,7 +84,7 @@
       },
       "patch": {
         "summary": "Update Account Information",
-        "description": "Account placements patch. Patch only updates account information for already placed accounts. It can have the same body as the POST request, but the only required fields are: accountNumber, accountNamespace, accountRelationship, and the field to update with the new value. Note that when certain fields are being updated, additional fields become required - for example, updating a phone number requires that the associated SMS consent field also be present in the request.",
+        "description": "Account placements patch. Patch only updates account information for already placed accounts. It can have the same body as the POST request, but the only required fields are: accountNumber, accountNamespace, accountRelationship, and the field to update with the new value. Note that when certain fields are being updated, additional fields become required - for example, updating a phone number requires that the associated SMS consent field also be present in the request. A maximum of 175 accounts/records can be updated in a single request.",
         "tags": [
           "Account Updates"
         ],
@@ -139,7 +139,7 @@
     "/inbound/v1/retraction": {
       "post": {
         "summary": "Retract Account",
-        "description": "Account retractions - when an account is retracted the Retain system stops sending all communications to consumer. Please note, that for multi account/record retraction requests, if one or more of the accounts cannot be found in our system (e.g. an incorrect accountNumber or accountNamespace is provided), while other accounts in the request can be found, the validly identified accounts will be retracted and the response will indicate the accounts that were not properly identified in the request.",
+        "description": "Account retractions - when an account is retracted the Retain system stops sending all communications to consumer. Please note, that for multi account/record retraction requests, if one or more of the accounts cannot be found in our system (e.g. an incorrect accountNumber or accountNamespace is provided), while other accounts in the request can be found, the validly identified accounts will be retracted and the response will indicate the accounts that were not properly identified in the request. A maximum of 175 accounts/records can be retracted in a single request.",
         "tags": [
           "Account Retractions"
         ],
@@ -194,7 +194,7 @@
     "/inbound/v1/payments": {
       "post": {
         "summary": "Add Payments to Account",
-        "description": "Account payments - payments provide feedback to the Retain system to make Heartbeat smarter. Please provide all of the unique payments for accounts placed, meaning only send one payment record for each payment received. Also, only send payments received during the time the account was placed with Retain. It is important that the Category Code is provided correctly, and that required fields are present. Please note, that for multi account/record payment requests, if one or more of the accounts cannot be found in our system (e.g. an incorrect accountNumber or accountNamespace is provided), while other accounts in the request can be found, the validly identified accounts will have their payments recorded and the response will indicate the accounts that were not properly identified in the request.",
+        "description": "Account payments - payments provide feedback to the Retain system to make Heartbeat smarter. Please provide all of the unique payments for accounts placed, meaning only send one payment record for each payment received. Also, only send payments received during the time the account was placed with Retain. It is important that the Category Code is provided correctly, and that required fields are present. Please note, that for multi account/record payment requests, if one or more of the accounts cannot be found in our system (e.g. an incorrect accountNumber or accountNamespace is provided), while other accounts in the request can be found, the validly identified accounts will have their payments recorded and the response will indicate the accounts that were not properly identified in the request. A maximum of 175 accounts/records can be included in a single request.",
         "tags": [
           "Payments"
         ],
