@@ -9,19 +9,29 @@
     {
       "name": "Account Placements",
       "x-displayName": "Account Placements",
-      "description": "Add and retract accounts."
+      "description": "Place new accounts"
+    },
+    {
+      "name": "Account Updates",
+      "x-displayName": "Account Updates",
+      "description": "Update previously placed accounts"
+    },
+    {
+      "name": "Account Retractions",
+      "x-displayName": "Account Retractions",
+      "description": "Retract previously placed accounts"
     },
     {
       "name": "Payments",
       "x-displayName": "Payments",
-      "description": "Endpoints related to account payments"
+      "description": "Notify us of payments made on accounts"
     }
   ],
   "paths": {
     "/inbound/v1/placement": {
       "post": {
         "summary": "Add Accounts",
-        "description": "Account placements and updates. When an account is placed, we will immediately start communications with the account, and will only stop when the account is retracted.",
+        "description": "Account placements and updates. When an account is placed, we will immediately start communications with the account, and will cease communications when the account is retracted. A maximum of 175 accounts/records can be placed in a single request.",
         "tags": [
           "Account Placements"
         ],
@@ -41,11 +51,31 @@
         },
         "responses": {
           "200": {
-            "description": "successful operation",
+            "description": "Payload was successfully parsed - refer to message for additional information",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/InboundAPIResponse"
+                  "$ref": "#/components/schemas/InboundAPIResponse200"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request - refer to message and/or FailedRecords for additional information. Requests can fail for a variety of reasons, e.g. invalid JSON formatting, invalid or required fields not being present.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InboundAPIResponse400"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error - an error occurred while processing the request.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InboundAPIResponse500"
                 }
               }
             }
@@ -54,9 +84,9 @@
       },
       "patch": {
         "summary": "Update Account Information",
-        "description": "Account placements patch. This patch only updates account information. It can have the same body payload as the POST option, but only clientId (comes from the encrypted apikey), accountNamespace and accountNumber is required.",
+        "description": "Account placements patch. Patch only updates account information for already placed accounts. It can have the same body as the POST request, but the only required fields are: accountNumber, accountNamespace, accountRelationship, and the field to update with the new value. Note that when certain fields are being updated, additional fields become required - for example, updating a phone number requires that the associated SMS consent field also be present in the request. A maximum of 175 accounts/records can be updated in a single request.",
         "tags": [
-          "Account Placements"
+          "Account Updates"
         ],
         "requestBody": {
           "required": true,
@@ -74,11 +104,31 @@
         },
         "responses": {
           "200": {
-            "description": "successful operation",
+            "description": "Payload was successfully parsed",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/InboundAPIResponse"
+                  "$ref": "#/components/schemas/InboundAPIResponse200"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request - refer to message and/or FailedRecords for additional information. Requests can fail for a variety of reasons, e.g. invalid JSON formatting, invalid or required fields not being present.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InboundAPIResponse400"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error - an error occurred while processing the request.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InboundAPIResponse500"
                 }
               }
             }
@@ -89,9 +139,9 @@
     "/inbound/v1/retraction": {
       "post": {
         "summary": "Retract Account",
-        "description": "Account retractions - the platform will stop sending communications and close them for all accounts specified through this endpoint.",
+        "description": "Account retractions - when an account is retracted the Retain system stops sending all communications to consumer. Please note, that for multi account/record retraction requests, if one or more of the accounts cannot be found in our system (e.g. an incorrect accountNumber or accountNamespace is provided), while other accounts in the request can be found, the validly identified accounts will be retracted and the response will indicate the accounts that were not properly identified in the request. A maximum of 175 accounts/records can be retracted in a single request.",
         "tags": [
-          "Account Placements"
+          "Account Retractions"
         ],
         "requestBody": {
           "required": true,
@@ -113,7 +163,27 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/InboundAPIResponse"
+                  "$ref": "#/components/schemas/InboundAPIResponsePaymentRetraction200"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request - refer to message and/or FailedRecords for additional information. Requests can fail for a variety of reasons, e.g. invalid JSON formatting, invalid or required fields not being present.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InboundAPIResponse400"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error - an error occurred while processing the request.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InboundAPIResponse500"
                 }
               }
             }
@@ -124,7 +194,7 @@
     "/inbound/v1/payments": {
       "post": {
         "summary": "Add Payments to Account",
-        "description": "Account payments - our platform will take this information as information only to judge the success of our platforms. This will lead to better optimization of our communication strategy. This DOES NOT affect the account in any ways - you will still need to send us balance updates separately.",
+        "description": "Account payments - payments provide feedback to the Retain system to make Heartbeat smarter. Please provide all of the unique payments for accounts placed, meaning only send one payment record for each payment received. Also, only send payments received during the time the account was placed with Retain. It is important that the Category Code is provided correctly, and that required fields are present. Please note, that for multi account/record payment requests, if one or more of the accounts cannot be found in our system (e.g. an incorrect accountNumber or accountNamespace is provided), while other accounts in the request can be found, the validly identified accounts will have their payments recorded and the response will indicate the accounts that were not properly identified in the request. A maximum of 175 accounts/records can be included in a single request.",
         "tags": [
           "Payments"
         ],
@@ -148,7 +218,27 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/InboundAPIResponse"
+                  "$ref": "#/components/schemas/InboundAPIResponsePaymentRetraction200"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request - refer to message and/or FailedRecords for additional information. Requests can fail for a variety of reasons, e.g. invalid JSON formatting, invalid or required fields not being present.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InboundAPIResponse400"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error - an error occurred while processing the request.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InboundAPIResponse500"
                 }
               }
             }
@@ -171,29 +261,27 @@
         "properties": {
           "accountNumber": {
             "type": "string",
-            "description": "Client account number"
+            "description": "Account number used to uniquely identify each customer. Only last four digits are shown in our content. Avoid sending credit card PANs."
           },
           "accountNamespace": {
             "type": "string",
-            "description": "Differentiates accounts across geographic regions or business units"
+            "description": "Differentiates accounts across geographic regions or business units. In combination with accountNumber, the accountNamespace creates a two-part identifier (key) in our system."
           },
           "accountRelationship": {
             "type": "string",
-            "enum": [
-              "SIGNER",
-              "COSIGNER"
-            ],
-            "description": "The relationship of the person in this demographic record to the account"
+            "enum": ["SIGNER"],
+            "example": "SIGNER",
+            "description": "The account relationship of the person named in this placement. Must be SIGNER."
           },
           "accountOpenDate": {
             "type": "string",
             "pattern": "^\\d{2}/\\d{2}/\\d{4}$",
             "description": "The date the account was originally opened (mm/dd/yyyy)"
           },
-          "brandID": {
+          "brandId": {
             "type": "string",
             "format": "uuid",
-            "description": "UUID of the brand to be represented. This enables different first-party theming for different brands under one client relationship. A Client Success Manager or Implementation Manager will provide you with the relevant ID(s) to use."
+            "description": "An ID for the brand to be represented. This enables different first-party theming for different brands under one client relationship."
           },
           "productType": {
             "type": "string",
@@ -201,71 +289,62 @@
               "AUTO",
               "BNPL",
               "CARD",
+              "DDA",
               "FITNESS",
               "HEL",
               "HELOC",
+              "PRESETTLEMENT",
+              "POSTSETTLEMENT",
+              "POSTCHARGEOFF",
               "UNSECURED",
               "UTILITY"
             ],
-            "description": "Product type of the account"
+            "description": "Product type of the account. Used to select Product specific email templates."
           },
           "productDescription": {
             "type": "string",
-            "description": "This identifies the financial product to the consumer in content. Sample sentence: \"you have a delinquent balance on your [product description].\""
+            "description": "This identifies the financial product to the consumer in content. Sample sentence: \"you have a delinquent balance on your [productDescription].\""
           },
           "dateAssigned": {
             "type": "string",
             "pattern": "^\\d{2}/\\d{2}/\\d{4}$",
-            "description": "The date the account was placed with TrueAccord (mm/dd/yyyy)"
+            "description": "The date the account was placed with Retain (mm/dd/yyyy)"
           },
           "expectedRetractionDate": {
             "type": "string",
             "pattern": "^\\d{2}/\\d{2}/\\d{4}$",
-            "description": "The latest date the account will be retracted from TrueAccord. (mm/dd/yyyy)"
-          },
-          "transactionDate": {
-            "type": "string",
-            "pattern": "^\\d{2}/\\d{2}/\\d{4}$",
-            "description": "The date the record was generated (mm/dd/yyyy)"
+            "description": "An estimated date that the account will be retracted from TrueAccord (based on charge off, or other business rule). This enables additional monitoring and reporting (mm/dd/yyyy)"
           },
           "firstName": {
             "type": "string",
-            "description": "The first name for this demographic entry"
+            "description": "Customer First Name"
           },
           "lastName": {
             "type": "string",
-            "description": "The last name for this demographic entry"
+            "description": "Customer Last Name"
           },
           "middleName": {
             "type": "string",
-            "description": "The middle name for this demographic entry"
-          },
-          "prefix": {
-            "type": "string",
-            "description": "The prefix for this demographic entry"
-          },
-          "suffix": {
-            "type": "string",
-            "description": "The suffix for this demographic entry"
+            "description": "Customer Middle Name."
           },
           "email1": {
             "type": "string",
             "format": "email",
-            "description": "First email address for this demographic entry"
+            "description": "Customer email address - primary."
           },
           "email2": {
             "type": "string",
             "format": "email",
-            "description": "Second email address for this demographic entry"
+            "description": "Customer email address - additional."
           },
           "email3": {
             "type": "string",
             "format": "email",
-            "description": "Third email address for this demographic entry"
+            "description": "Customer email address - additional."
           },
           "telephone1": {
             "type": "string",
-            "description": "First telephone number for this demographic entry (in a 10-digit format e.g. 8666112731)",
+            "description": "First telephone number for the customer (in a 10-digit format e.g. 8666112731)",
             "pattern": "^\\d{10}$"
           },
           "telephoneType1": {
@@ -285,11 +364,11 @@
               "YES",
               "NO"
             ],
-            "description": "Consent flag for the first telephone number"
+            "description": "Indicates whether client has consent for SMS communications with this customer, at this number."
           },
           "telephone2": {
             "type": "string",
-            "description": "Second telephone number for this demographic entry (in a 10-digit format e.g. 8666112731)",
+            "description": "Second telephone number for the customer (in a 10-digit format e.g. 8666112731)",
             "pattern": "^\\d{10}$"
           },
           "telephoneType2": {
@@ -309,11 +388,11 @@
               "YES",
               "NO"
             ],
-            "description": "Consent flag for the second telephone number"
+            "description": "Indicates whether client has consent for SMS communications with this customer, at this number."
           },
           "telephone3": {
             "type": "string",
-            "description": "Third telephone number for this demographic entry (in a 10-digit format e.g. 8666112731)",
+            "description": "Third telephone number for the customer (in a 10-digit format e.g. 8666112731)",
             "pattern": "^\\d{10}$"
           },
           "telephoneType3": {
@@ -333,19 +412,19 @@
               "YES",
               "NO"
             ],
-            "description": "Consent flag for the third telephone number"
+            "description": "Indicates whether client has consent for SMS communications with this customer, at this number."
           },
           "addressLine1": {
             "type": "string",
-            "description": "The first line of the address for this demographic entry. Include building number and street name. Separate from ‘Street Address 2,’ ‘City,’ ‘State,’and ‘ZIP Code.’"
+            "description": "The first line of the address for the customer. Include building number and street name. Separate from ‘addressLine2’, ‘city’, ‘state’ and ‘zipcode’."
           },
           "addressLine2": {
             "type": "string",
-            "description": "The second line of the address for this demographic entry. Include building number and street name. Separate from ‘Street Address 1,’ ‘City,’ ‘State,’and ‘ZIP Code.’"
+            "description": "The second line of the address for the customer. Include apartment or suite number. Separate from ‘addressLine1’, ‘city’, ‘state’ and ‘zipcode’."
           },
           "addressLine3": {
             "type": "string",
-            "description": "The third line of the address for this demographic entry."
+            "description": "The third line of the address for the customer. Separate from ‘addressLine1’, ‘addressLine2’, ‘city’, ‘state’ and ‘zipcode’."
           },
           "addressType": {
             "type": "string",
@@ -357,81 +436,73 @@
           },
           "city": {
             "type": "string",
-            "description": "The city for this demographic entry."
+            "description": "The city for the customer."
           },
           "state": {
             "type": "string",
-            "description": "The state code for this demographic entry as two-letter abbreviations (e.g. CA, NY, etc.)."
+            "description": "The state code for the customer as two-letter abbreviation (e.g. CA, NY, etc.)."
           },
           "zipcode": {
             "type": "string",
-            "description": "The ZIP code or Postal Code for this demographic entry. Write the 5-digit ZIP code.",
+            "description": "The 5 digit ZIP code for the customer.",
             "pattern": "^\\d{5}$"
           },
           "totalAmountDue": {
             "type": "integer",
             "format": "int64",
-            "description": "The total amount that the customer owes on the account (past due + currently due). Amount is in cents"
+            "description": "The total amount that the customer owes on the account (Total Delinquent Amount + Current Amount Due). Amount is in cents."
           },
           "currentAmountDue": {
             "type": "integer",
             "format": "int64",
-            "description": "Amount due for this billing cycle. Amount is in cents"
+            "description": "Amount currently due for this billing period (ignoring Delinquent Amount). Amount is in cents."
           },
           "currentBalance": {
             "type": "integer",
             "format": "int64",
-            "description": "The current balance on the account. Amount is in cents"
+            "description": "The entire balance of the account, regardless of Total Amount Due in this billing period. Amount is in cents."
           },
           "totalDelinquentAmount": {
             "type": "integer",
             "format": "int64",
-            "description": "The current delinquent amount on the account. Amount is in cents"
+            "default": 1000,
+            "description": "The amount currently delinquent on the account. Amount is in cents."
           },
           "delinquencyDate": {
             "type": "string",
             "pattern": "^\\d{2}/\\d{2}/\\d{4}$",
-            "description": "Date that account became delinquent (mm/dd/yyyy)"
+            "description": "Date that account became delinquent (this is the Due Date of the last missed payment in the content) (mm/dd/yyyy)"
           },
           "cyclesDelinquent": {
             "type": "integer",
             "format": "int32",
-            "description": "The numbers of cycles that the account is delinquent (number > 0)."
-          },
-          "lastPaymentAmount": {
-            "type": "integer",
-            "format": "int64",
-            "description": "The amount of the last customer payment. Amount is in cents"
-          },
-          "lastPaymentDate": {
-            "type": "string",
-            "pattern": "^\\d{2}/\\d{2}/\\d{4}$",
-            "description": "The date of the last customer payment (mm/dd/yyyy)"
-          },
-          "monthToDateFeesPaid": {
-            "type": "integer",
-            "format": "int64",
-            "description": "Month to Date Fees Paid. Amount is in cents"
-          },
-          "monthToDateInterestPaid": {
-            "type": "integer",
-            "format": "int64",
-            "description": "Month to Date Interest Paid. Amount is in cents"
-          },
-          "monthToDatePrincipalPaid": {
-            "type": "integer",
-            "format": "int64",
-            "description": "Month to Date Principal Paid. Amount is in cents"
-          },
-          "placementNumber": {
-            "type": "integer",
-            "format": "int32",
-            "description": "Number of consecutive cycles that the account has been placed with TrueAccord."
+            "default": 1,
+            "description": "The numbers of cycles that the account is delinquent (number > 0). Used to select Cycle specific email templates."
           },
           "campaignId": {
             "type": "string",
             "format": "uuid",
-            "description": "UUID of the campaign the account is a part of. Client Success Manager or Implementation Manager will provide you with the relevant ID(s) to use."
+            "description": "An ID referencing the Campaigns communication this customer is targeted for. Client Success Manager or Implementation Manager will provide you with the relevant ID(s) to use."
+          },
+          "displayAccountNumberLast4": {
+            "type": "string",
+            "description":"Alternate 4 digit display number that will be used in Content if using the last 4 digits of provided Account Number will not be useful/recognizable to customers."
+          },
+          "customerNumber": {
+            "type":  "string",
+            "description": "Optional number used to group accounts for the identified Customer, if required."
+          },
+          "originalCreditor": {
+            "type":  "string",
+            "description": "Name of the original creditor for accounts that were previously owned by a different creditor. This field is used to populate content associated with Pre-Settlement and Post-Settlement product types."
+          },
+          "currentCreditor": {
+            "type":  "string",
+            "description": "Name of current creditor. This field is used to populate content associated with Pre-Settlement and Post-Settlement product types."
+          },
+          "originalAccountNumber": {
+            "type":  "string",
+            "description": "Last four digits of the Original Account Number that was assigned by original creditor. This field is used to populate content associated with Pre-Settlement and Post-Settlement product types."
           }
         },
         "required": [
@@ -439,7 +510,7 @@
           "accountNamespace",
           "accountRelationship",
           "accountOpenDate",
-          "brandID",
+          "brandId",
           "productType",
           "productDescription",
           "dateAssigned",
@@ -455,9 +526,6 @@
           "city",
           "state",
           "zipcode",
-          "totalAmountDue",
-          "currentAmountDue",
-          "currentBalance",
           "totalDelinquentAmount",
           "delinquencyDate",
           "cyclesDelinquent"
@@ -468,26 +536,24 @@
         "properties": {
           "accountNumber": {
             "type": "string",
-            "description": "Client account number"
+            "description": "Account number of the account to update. accountNumber cannot be updated."
           },
           "accountNamespace": {
             "type": "string",
-            "description": "Differentiates accounts across geographic regions or business units"
+            "description": "The accountNamespace that this account was originally placed with. accountNamespace cannot be updated."
           },
           "accountRelationship": {
             "type": "string",
-            "enum": [
-              "SIGNER",
-              "COSIGNER"
-            ],
-            "description": "The relationship of the person in this demographic record to the account"
+            "enum": ["SIGNER"],
+            "default": "SIGNER",
+            "description": "The accountRelationship that this account was originally placed with. accountRelationship cannot be updated."
           },
           "accountOpenDate": {
             "type": "string",
             "pattern": "^\\d{2}/\\d{2}/\\d{4}$",
             "description": "The date the account was originally opened (mm/dd/yyyy)"
           },
-          "brandID": {
+          "brandId": {
             "type": "string",
             "format": "uuid",
             "description": "An ID representing the brand they want us to represent. This allows us to use different first-party messaging and themes for different brands. We will provide you a set to use."
@@ -498,17 +564,21 @@
               "AUTO",
               "BNPL",
               "CARD",
+              "DDA",
               "FITNESS",
               "HEL",
               "HELOC",
+              "PRESETTLEMENT",
+              "POSTSETTLEMENT",
+              "POSTCHARGEOFF",
               "UNSECURED",
               "UTILITY"
             ],
-            "description": "Product type of the account"
+            "description": "Product type of the account."
           },
           "productDescription": {
             "type": "string",
-            "description": "This identifies the financial product to the consumer in content. Sample sentence: \"you have a delinquent balance on your [product description].\""
+            "description": "This identifies the financial product to the consumer in content. Sample sentence: \"you have a delinquent balance on your [product description].\" If the productDescription is being updated, the productType must also be provided."
           },
           "dateAssigned": {
             "type": "string",
@@ -518,16 +588,11 @@
           "expectedRetractionDate": {
             "type": "string",
             "pattern": "^\\d{2}/\\d{2}/\\d{4}$",
-            "description": "The latest date the account will be retracted from TrueAccord. (mm/dd/yyyy)"
-          },
-          "transactionDate": {
-            "type": "string",
-            "pattern": "^\\d{2}/\\d{2}/\\d{4}$",
-            "description": "The date the record was generated (mm/dd/yyyy)"
+            "description": "An estimated date that the account will be retracted from TrueAccord (based on charge off, or other business rule). This enables additional monitoring and reporting (mm/dd/yyyy)"
           },
           "firstName": {
             "type": "string",
-            "description": "The first name for this demographic entry"
+            "description": "Customer First Name"
           },
           "lastName": {
             "type": "string",
@@ -535,34 +600,26 @@
           },
           "middleName": {
             "type": "string",
-            "description": "The middle name for this demographic entry"
-          },
-          "prefix": {
-            "type": "string",
-            "description": "The prefix for this demographic entry"
-          },
-          "suffix": {
-            "type": "string",
-            "description": "The suffix for this demographic entry"
+            "description": "Customer Last Name"
           },
           "email1": {
             "type": "string",
             "format": "email",
-            "description": "First email address for this demographic entry"
+            "description": "Customer email address - primary."
           },
           "email2": {
             "type": "string",
             "format": "email",
-            "description": "Second email address for this demographic entry"
+            "description": "Customer email address - additional."
           },
           "email3": {
             "type": "string",
             "format": "email",
-            "description": "Third email address for this demographic entry"
+            "description": "Customer email address - additional."
           },
           "telephone1": {
             "type": "string",
-            "description": "First telephone number for this demographic entry (in a 10-digit format e.g. 8666112731)",
+            "description": "First telephone number for the customer (in a 10-digit format e.g. 8666112731). If the telephone number is being updated, the telephoneSMSConsent value must also be provided.",
             "pattern": "^\\d{10}$"
           },
           "telephoneType1": {
@@ -582,11 +639,11 @@
               "YES",
               "NO"
             ],
-            "description": "Consent flag for the first telephone number"
+            "description": "Indicates whether client has consent for SMS communications with this customer, at this number. If the telephoneSMSConsent is being updated, the associated phone number must also be provided."
           },
           "telephone2": {
             "type": "string",
-            "description": "Second telephone number for this demographic entry (in a 10-digit format e.g. 8666112731)",
+            "description": "Second telephone number for the customer (in a 10-digit format e.g. 8666112731). If the telephone number is being updated, the telephoneSMSConsent value must also be provided.",
             "pattern": "^\\d{10}$"
           },
           "telephoneType2": {
@@ -606,11 +663,11 @@
               "YES",
               "NO"
             ],
-            "description": "Consent flag for the second telephone number"
+            "description": "Indicates whether client has consent for SMS communications with this customer, at this number. If the telephoneSMSConsent is being updated, the associated phone number must also be provided."
           },
           "telephone3": {
             "type": "string",
-            "description": "Third telephone number for this demographic entry (in a 10-digit format e.g. 8666112731)",
+            "description": "Third telephone number for the customer (in a 10-digit format e.g. 8666112731). If the telephone number is being updated, the telephoneSMSConsent value must also be provided.",
             "pattern": "^\\d{10}$"
           },
           "telephoneType3": {
@@ -630,19 +687,19 @@
               "YES",
               "NO"
             ],
-            "description": "Consent flag for the third telephone number"
+            "description": "Indicates whether client has consent for SMS communications with this customer, at this number. If the telephoneSMSConsent is being updated, the associated phone number must also be provided."
           },
           "addressLine1": {
             "type": "string",
-            "description": "The first line of the address for this demographic entry. Include building number and street name. Separate from ‘Street Address 2,’ ‘City,’ ‘State,’and ‘ZIP Code.’"
+            "description": "The first line of the address for the customer. Include building number and street name. Separate from ‘addressLine2’, ‘city’, ‘state’ and ‘zipcode’."
           },
           "addressLine2": {
             "type": "string",
-            "description": "The second line of the address for this demographic entry. Include building number and street name. Separate from ‘Street Address 1,’ ‘City,’ ‘State,’and ‘ZIP Code.’"
+            "description": "The second line of the address for the customer. Include apartment or suite number. Separate from ‘addressLine1’, ‘city’, ‘state’ and ‘zipcode’."
           },
           "addressLine3": {
             "type": "string",
-            "description": "The third line of the address for this demographic entry."
+            "description": "The third line of the address for the customer. Separate from ‘addressLine1’, ‘addressLine2’, ‘city’, ‘state’ and ‘zipcode’."
           },
           "addressType": {
             "type": "string",
@@ -654,36 +711,37 @@
           },
           "city": {
             "type": "string",
-            "description": "The city for this demographic entry."
+            "description": "The city for the customer."
           },
           "state": {
             "type": "string",
-            "description": "The state code for this demographic entry as two-letter abbreviations (e.g. CA, NY, etc.)."
+            "description": "The state code for the customer as two-letter abbreviation (e.g. CA, NY, etc.)."
           },
           "zipcode": {
             "type": "string",
-            "description": "The ZIP code or Postal Code for this demographic entry. Write the 5-digit ZIP code.",
+            "description": "The 5 digit ZIP code for the customer.",
             "pattern": "^\\d{5}$"
           },
           "totalAmountDue": {
             "type": "integer",
             "format": "int64",
-            "description": "The total amount that the customer owes on the account (past due + currently due). Amount is in cents"
+            "description": "The total amount that the customer owes on the account (Total Delinquent Amount + Current Amount Due). Amount is in cents."
           },
           "currentAmountDue": {
             "type": "integer",
             "format": "int64",
-            "description": "Amount due for this billing cycle. Amount is in cents"
+            "description": "Amount currently due for this billing period (ignoring Delinquent Amount). Amount is in cents."
           },
           "currentBalance": {
             "type": "integer",
             "format": "int64",
-            "description": "The current balance on the account. Amount is in cents"
+            "description": "The entire balance of the account, regardless of Total Amount Due in this billing period. Amount is in cents."
           },
           "totalDelinquentAmount": {
             "type": "integer",
             "format": "int64",
-            "description": "The current delinquent amount on the account. Amount is in cents"
+            "default": 1000,
+            "description": "The current delinquent amount on the account. Amount is in cents."
           },
           "delinquencyDate": {
             "type": "string",
@@ -693,42 +751,34 @@
           "cyclesDelinquent": {
             "type": "integer",
             "format": "int32",
-            "description": "The numbers of cycles that the account is delinquent (number > 0)."
+            "default": 1,
+            "description": "The numbers of cycles that the account is delinquent (number > 0). Used to select Cycle specific email templates."
           },
-          "lastPaymentAmount": {
-            "type": "integer",
-            "format": "int64",
-            "description": "The amount of the last customer payment. Amount is in cents"
-          },
-          "lastPaymentDate": {
+          "displayAccountNumberLast4": {
             "type": "string",
-            "pattern": "^\\d{2}/\\d{2}/\\d{4}$",
-            "description": "The date of the last customer payment (mm/dd/yyyy)"
+            "description":"Alternate 4 digit display number that will be used in Content if using the last 4 digits of provided Account Number will not be useful/recognizable to customers."
           },
-          "monthToDateFeesPaid": {
-            "type": "integer",
-            "format": "int64",
-            "description": "Month to Date Fees Paid. Amount is in cents"
+          "customerNumber": {
+            "type":  "string",
+            "description": "Optional number used to group accounts for the identified Customer, if required."
           },
-          "monthToDateInterestPaid": {
-            "type": "integer",
-            "format": "int64",
-            "description": "Month to Date Interest Paid. Amount is in cents"
+          "originalCreditor": {
+            "type":  "string",
+            "description": "Name of the original creditor for accounts that were previously owned by a different creditor. This field is used to populate content associated with Pre-Settlement and Post-Settlement product types. If this value is being updated, the productType, originalAccountNumber, and currentCreditor are also required."
           },
-          "monthToDatePrincipalPaid": {
-            "type": "integer",
-            "format": "int64",
-            "description": "Month to Date Principal Paid. Amount is in cents"
+          "currentCreditor": {
+            "type":  "string",
+            "description": "Name of current creditor. This field is used to populate content associated with Pre-Settlement and Post-Settlement product types. If this value is being updated, the productType, originalAccountNumber, and originalCreditor are also required."
           },
-          "placementNumber": {
-            "type": "integer",
-            "format": "int32",
-            "description": "Number of consecutive cycles that the account has been placed with TrueAccord."
+          "originalAccountNumber": {
+            "type":  "string",
+            "description": "Last four digits of the Original Account Number that was assigned by original creditor. This field is used to populate content associated with Pre-Settlement and Post-Settlement product types. If this value is being updated, the productType, originalCreditor, and currentCreditor are also required."
           }
         },
         "required": [
           "accountNumber",
-          "accountNamespace"
+          "accountNamespace",
+          "accountRelationship"
         ]
       },
       "RetractionInformation": {
@@ -736,11 +786,11 @@
         "properties": {
           "accountNumber": {
             "type": "string",
-            "description": "Client account number"
+            "description": "Account number of account to retract."
           },
           "accountNamespace": {
             "type": "string",
-            "description": "Differentiates accounts across geographic regions or business units"
+            "description": "accountNamespace that the account to retract was originally placed with."
           },
           "recallReason": {
             "type": "string",
@@ -748,14 +798,10 @@
               "PAID",
               "BANKRUPT",
               "DISPUTED",
-              "CLOSED"
+              "CLOSED",
+              "CAMPAIGN_ENDED"
             ],
-            "description": "Reason that the placement is being recalled"
-          },
-          "recallDate": {
-            "type": "string",
-            "pattern": "^\\d{2}/\\d{2}/\\d{4}$",
-            "description": "The date that the account is scheduled to be recalled from TrueAccord (mm/dd/yyyy)"
+            "description": "Reason that the account is being retracted."
           }
         },
         "required": [
@@ -767,50 +813,49 @@
       "PaymentsInformation": {
         "type": "object",
         "properties": {
-          "accountNamespace": {
-            "type": "string",
-            "description": "Client account name"
-          },
           "accountNumber": {
             "type": "string",
-            "description": "Client account number"
+            "description": "Account number of account for which to record the payment."
+          },
+          "accountNamespace": {
+            "type": "string",
+            "description": "accountNamespace that the account was originally placed with."
           },
           "paymentDescription": {
             "type": "string",
-            "description": "Free-form description of payment"
+            "description": "Free-form description of payment."
           },
           "paymentAmount": {
             "type": "integer",
             "format": "int64",
-            "description": "Amount of payment made. Amount is in cents"
+            "description": "Amount of payment made. Amount is in cents."
           },
           "transactionDate": {
             "type": "string",
             "pattern": "^\\d{2}/\\d{2}/\\d{4}$",
-            "description": "Date the payment occurred (mm/dd/yyyy)"
+            "description": "Date the payment occurred (mm/dd/yyyy)."
           },
           "categoryCode": {
             "type": "string",
             "enum": [
               "DEBIT",
               "PAYMENT",
-              "OTHER"
+              "OTHER",
+              "OTHER CREDIT"
             ],
             "description": "Type of transaction (Debit, Payment, Other Credit)"
-          },
-          "referenceNumber": {
-            "type": "string"
           }
         },
         "required": [
-          "accountName",
           "accountNumber",
+          "accountNamespace",
           "paymentAmount",
+          "paymentDescription",
           "transactionDate",
           "categoryCode"
         ]
       },
-      "InboundAPIResponse": {
+      "InboundAPIResponse200": {
         "type": "object",
         "properties": {
           "ClientId": {
@@ -819,12 +864,75 @@
           },
           "Status": {
             "type": "string",
-            "enum": [
-              "SUCCESS",
-              "FAILURE",
-              "ERROR"
-            ],
-            "description": "Response status (SUCCESS, FAILURE OR ERROR)"
+            "default": "SUCCESS",
+            "description": "Response status (SUCCESS)"
+          },
+          "Message": {
+            "type": "string",
+            "default": "Inbound process ends without errors",
+            "description": "Message description"
+          },
+          "ProcessedRecords": {
+            "type": "integer",
+            "format": "int32",
+            "description": "Number or records processed"
+          }
+        },
+        "required": [
+          "ClientId",
+          "Status",
+          "Message",
+          "ProcessedRecords"
+        ]
+      },
+      "InboundAPIResponsePaymentRetraction200": {
+        "type": "object",
+        "properties": {
+          "ClientId": {
+            "type": "string",
+            "description": "Client Id"
+          },
+          "Status": {
+            "type": "string",
+            "default": "SUCCESS",
+            "description": "Response status (SUCCESS)"
+          },
+          "Message": {
+            "type": "string",
+            "default": "Inbound process ends without errors",
+            "description": "Message description"
+          },
+          "ProcessedRecords": {
+            "type": "integer",
+            "format": "int32",
+            "description": "Number or records processed"
+          },
+          "FailedRecords": {
+            "type": "array",
+            "nullable": true,
+            "items": {
+              "$ref": "#/components/schemas/FailedRecord"
+            }
+          }
+        },
+        "required": [
+          "ClientId",
+          "Status",
+          "Message",
+          "ProcessedRecords"
+        ]
+      },
+      "InboundAPIResponse400": {
+        "type": "object",
+        "properties": {
+          "ClientId": {
+            "type": "string",
+            "description": "Client Id"
+          },
+          "Status": {
+            "type": "string",
+            "default": "ERROR",
+            "description": "Response status (ERROR)"
           },
           "Message": {
             "type": "string",
@@ -842,8 +950,31 @@
               "$ref": "#/components/schemas/FailedRecord"
             }
           }
-        }
+        },
+        "required": [
+          "Status",
+          "Message"
+        ]
       },
+      "InboundAPIResponse500": {
+        "type": "object",
+        "properties": {
+          "Status": {
+            "type": "string",
+            "default": "FAILURE",
+            "description": "Response status (FAILURE)"
+          },
+          "Message": {
+            "type": "string",
+            "description": "Message description"
+          }
+        },
+        "required": [
+          "Status",
+          "Message"
+        ]
+      },
+
       "FailedRecord": {
         "type": "object",
         "properties": {
