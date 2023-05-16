@@ -753,8 +753,30 @@
             "format": "int32",
             "default": 1,
             "description": "The numbers of cycles that the account is delinquent (number > 0). Used to select Cycle specific email templates."
+          },
+          "displayAccountNumberLast4": {
+            "type": "string",
+            "description":"Alternate 4 digit display number that will be used in Content if using the last 4 digits of provided Account Number will not be useful/recognizable to customers."
+          },
+          "customerNumber": {
+            "type":  "string",
+            "description": "Optional number used to group accounts for the identified Customer, if required."
+          },
+          "originalCreditor": {
+            "type":  "string",
+            "description": "Name of the original creditor for accounts that were previously owned by a different creditor. This field is used to populate content associated with Pre-Settlement and Post-Settlement product types. If this value is being updated, the productType, originalAccountNumber, and currentCreditor are also required."
+          },
+          "currentCreditor": {
+            "type":  "string",
+            "description": "Name of current creditor. This field is used to populate content associated with Pre-Settlement and Post-Settlement product types. If this value is being updated, the productType, originalAccountNumber, and originalCreditor are also required."
+          },
+          "originalAccountNumber": {
+            "type":  "string",
+            "description": "Last four digits of the Original Account Number that was assigned by original creditor. This field is used to populate content associated with Pre-Settlement and Post-Settlement product types. If this value is being updated, the productType, originalCreditor, and currentCreditor are also required."
           }
-        },
+        }
+      },
+
         "required": [
           "accountNumber",
           "accountNamespace",
