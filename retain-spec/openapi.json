@@ -774,9 +774,7 @@
             "type":  "string",
             "description": "Last four digits of the Original Account Number that was assigned by original creditor. This field is used to populate content associated with Pre-Settlement and Post-Settlement product types. If this value is being updated, the productType, originalCreditor, and currentCreditor are also required."
           }
-        }
-      },
-
+        },
         "required": [
           "accountNumber",
           "accountNamespace",
