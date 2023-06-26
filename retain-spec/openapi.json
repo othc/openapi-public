@@ -430,9 +430,9 @@
             "type": "string",
             "enum": [
               "HOME",
-              "BUSINESS"
+              "WORK"
             ],
-            "description": "The type of address transmitted in this record (ex. HOME, BUSINESS)"
+            "description": "The type of address transmitted in this record (ex. HOME, WORK)"
           },
           "city": {
             "type": "string",
@@ -705,9 +705,9 @@
             "type": "string",
             "enum": [
               "HOME",
-              "BUSINESS"
+              "WORK"
             ],
-            "description": "The type of address transmitted in this record (ex. HOME, BUSINESS)"
+            "description": "The type of address transmitted in this record (ex. HOME, WORK)"
           },
           "city": {
             "type": "string",
