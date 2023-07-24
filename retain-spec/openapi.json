@@ -800,7 +800,7 @@
               "DISPUTED",
               "CLOSED",
               "CAMPAIGN_ENDED",
-	      "INBOUND_CONTACT",
+              "INBOUND_CONTACT",
               "OUTBOUND_CONTACT",
               "PAYMENT_PLAN"
             ],
