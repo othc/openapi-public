@@ -799,7 +799,10 @@
               "BANKRUPT",
               "DISPUTED",
               "CLOSED",
-              "CAMPAIGN_ENDED"
+              "CAMPAIGN_ENDED",
+	      "INBOUND_CONTACT",
+              "OUTBOUND_CONTACT",
+              "PAYMENT_PLAN"
             ],
             "description": "Reason that the account is being retracted."
           }
