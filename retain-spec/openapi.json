@@ -366,6 +366,14 @@
             ],
             "description": "Indicates whether client has consent for SMS communications with this customer, at this number."
           },
+          "telephoneVMConsent1": {
+            "type": "string",
+            "enum": [
+              "YES",
+              "NO"
+            ],
+            "description": "Indicates whether client has consent for Voicemail Drop communications with this customer, at this number."
+          },
           "telephone2": {
             "type": "string",
             "description": "Second telephone number for the customer (in a 10-digit format e.g. 8666112731)",
@@ -390,6 +398,14 @@
             ],
             "description": "Indicates whether client has consent for SMS communications with this customer, at this number."
           },
+          "telephoneVMConsent2": {
+            "type": "string",
+            "enum": [
+              "YES",
+              "NO"
+            ],
+            "description": "Indicates whether client has consent for Voicemail Drop communications with this customer, at this number."
+          },
           "telephone3": {
             "type": "string",
             "description": "Third telephone number for the customer (in a 10-digit format e.g. 8666112731)",
@@ -413,6 +429,14 @@
               "NO"
             ],
             "description": "Indicates whether client has consent for SMS communications with this customer, at this number."
+          },
+          "telephoneVMConsent3": {
+            "type": "string",
+            "enum": [
+              "YES",
+              "NO"
+            ],
+            "description": "Indicates whether client has consent for Voicemail Drop communications with this customer, at this number."
           },
           "addressLine1": {
             "type": "string",
@@ -619,7 +643,7 @@
           },
           "telephone1": {
             "type": "string",
-            "description": "First telephone number for the customer (in a 10-digit format e.g. 8666112731). If the telephone number is being updated, the telephoneSMSConsent value must also be provided.",
+            "description": "First telephone number for the customer (in a 10-digit format e.g. 8666112731). If the telephone number is being updated, the telephoneSMSConsent, and telephoneVMConsent (if using Voicemail Drops), value must also be provided.",
             "pattern": "^\\d{10}$"
           },
           "telephoneType1": {
@@ -641,9 +665,17 @@
             ],
             "description": "Indicates whether client has consent for SMS communications with this customer, at this number. If the telephoneSMSConsent is being updated, the associated phone number must also be provided."
           },
+          "telephoneVMConsent1": {
+            "type": "string",
+            "enum": [
+              "YES",
+              "NO"
+            ],
+            "description": "Indicates whether client has consent for Voicemail Drop communications with this customer, at this number. If the telephoneVMConsent is being updated, the associated phone number must also be provided."
+          },
           "telephone2": {
             "type": "string",
-            "description": "Second telephone number for the customer (in a 10-digit format e.g. 8666112731). If the telephone number is being updated, the telephoneSMSConsent value must also be provided.",
+            "description": "Second telephone number for the customer (in a 10-digit format e.g. 8666112731). If the telephone number is being updated, the telephoneSMSConsent, and telephoneVMConsent (if using Voicemail Drops), value must also be provided.",
             "pattern": "^\\d{10}$"
           },
           "telephoneType2": {
@@ -665,9 +697,17 @@
             ],
             "description": "Indicates whether client has consent for SMS communications with this customer, at this number. If the telephoneSMSConsent is being updated, the associated phone number must also be provided."
           },
+          "telephoneVMConsent2": {
+            "type": "string",
+            "enum": [
+              "YES",
+              "NO"
+            ],
+            "description": "Indicates whether client has consent for Voicemail Drop communications with this customer, at this number. If the telephoneVMConsent is being updated, the associated phone number must also be provided."
+          },
           "telephone3": {
             "type": "string",
-            "description": "Third telephone number for the customer (in a 10-digit format e.g. 8666112731). If the telephone number is being updated, the telephoneSMSConsent value must also be provided.",
+            "description": "Third telephone number for the customer (in a 10-digit format e.g. 8666112731). If the telephone number is being updated, the telephoneSMSConsent, and telephoneVMConsent (if using Voicemail Drops), value must also be provided.",
             "pattern": "^\\d{10}$"
           },
           "telephoneType3": {
@@ -688,6 +728,14 @@
               "NO"
             ],
             "description": "Indicates whether client has consent for SMS communications with this customer, at this number. If the telephoneSMSConsent is being updated, the associated phone number must also be provided."
+          },
+          "telephoneVMConsent3": {
+            "type": "string",
+            "enum": [
+              "YES",
+              "NO"
+            ],
+            "description": "Indicates whether client has consent for Voicemail Drop communications with this customer, at this number. If the telephoneVMConsent is being updated, the associated phone number must also be provided."
           },
           "addressLine1": {
             "type": "string",
